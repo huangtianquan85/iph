@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
 import hashlib
 import zip_utils
 import datetime
@@ -21,6 +22,9 @@ src = 'test.apk'
 shrink = 'shrink.apk'
 repack = 'repack.apk'
 unpack_folder = 'tmp'
+
+if not os.path.exists(unpack_folder):
+    os.makedirs(unpack_folder)
 
 src_md5 = get_file_md5(src)
 

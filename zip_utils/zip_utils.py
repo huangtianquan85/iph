@@ -3,6 +3,7 @@
 
 import os
 import struct
+import hashlib
 
 
 """
@@ -63,9 +64,9 @@ class FileHeadInfo(object):
 def do(src_path, dst_path, handler):
     ''' 遍历 zip 包内所有头结构并执行相应处理
     Args:
-        src_path (str): 源 zip 包路径
-        dst_path (str): 目标 zip 包路径
-        handler (func): 处理方法
+        src_path: 源 zip 包路径
+        dst_path: 目标 zip 包路径
+        handler:  处理方法
     '''
 
     # 打开文件
@@ -98,25 +99,38 @@ def do(src_path, dst_path, handler):
 def unpack(src_path, dst_path, item_folder):
     ''' 将原始 zip 包拆分存储
     Args:
-        src_path (str):     原始 zip 包路径
-        dst_path (str):     精简后的 zip 包路径
-        item_folder (str):  文件内容存储路径
+        src_path:    原始 zip 包路径
+        dst_path:    精简后的 zip 包路径
+        item_folder: 文件内容存储路径
     '''
 
-    def handler(zip, _, head):
-        # 创建目录
+    def handler(src, dst, head):
+        ''' 处理单个文件
+        Args:
+            src:  原始 zip 文件句柄
+            dst:  精简后的 zip 文件句柄
+            head: 头信息
+        '''
 
         # 定位到头结构末尾
-        zip.seek(head.offset + head.head_len)
+        src.seek(head.offset + head.head_len)
+
+        # 读取内容
+        data = src.read(head.data_len)
+
+        # 计算 hash
+        m = hashlib.md5()
+        m.update(data)
+        hash = m.hexdigest()
 
         # 写内容到文件
-        path = os.path.join(item_folder, head.file_name)
-        folder = os.path.dirname(path)
-        if not os.path.exists(folder):
-            os.makedirs(folder)
+        path = os.path.join(item_folder, hash)
+        if not os.path.exists(path):
+            with open(path, 'wb') as f:
+                f.write(data)
 
-        with open(path, 'wb') as f:
-            f.write(zip.read(head.data_len))
+        # 记录 hash
+        dst.write(m.digest())
 
         # 返回下一个头结构的偏移
         return head.offset + head.head_len + head.data_len
@@ -125,18 +139,33 @@ def unpack(src_path, dst_path, item_folder):
 
 
 def repack(src_path, dst_path, item_folder):
-    ''' 将原始 zip 包拆分存储
+    ''' 将精简后的 zip 恢复
     Args:
-        src_path (str):     精简后的 zip 包路径
-        dst_path (str):     恢复后的 zip 包路径
-        item_folder (str):  文件内容存储路径
+        src_path:    精简后的 zip 包路径
+        dst_path:    恢复后的 zip 包路径
+        item_folder: 文件内容存储路径
     '''
 
-    def handler(_, zip, head):
+    hash_len = 16
+
+    def handler(src, dst, head):
+        ''' 处理单个文件
+        Args:
+            src:  精简后的 zip 文件句柄
+            dst:  恢复后的 zip 文件句柄
+            head: 头信息
+        '''
+
+        # 读取 hash
+        src.seek(head.offset + head.head_len)
+        hash = src.read(hash_len).hex()
+
         # 读取内容并写入恢复文件
-        item_path = os.path.join(item_folder, head.file_name)
-        with open(item_path, 'rb') as f:
-            zip.write(f.read())
-        return head.offset + head.head_len
+        path = os.path.join(item_folder, hash)
+        with open(path, 'rb') as f:
+            dst.write(f.read())
+
+        # 返回下一个头结构的偏移
+        return head.offset + head.head_len + hash_len
 
     return do(src_path, dst_path, handler)
