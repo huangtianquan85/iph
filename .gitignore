@@ -17,3 +17,9 @@ Thumbs.db
 # Ignore IDEs
 .idea
 .vscode
+
+# Ignore Test Files
+tmp
+*.apk
+*.zip
+*.ipa

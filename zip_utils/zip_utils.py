@@ -1,0 +1,142 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import os
+import struct
+
+
+"""
+0	4	local file header signature	文件头标识(固定值0x04034b50)
+4	2	version needed to extract	解压时遵循ZIP规范的最低版本
+6	2	general purpose bit flag	通用标志位
+8	2	compression method	压缩方式
+10	2	last mod file time	最后修改时间（MS-DOS格式）
+12	2	last mod file date	最后修改日期（MS-DOS格式）
+14	4	crc-32	冗余校验码
+18	4	compressed size	压缩后的大小
+22	4	uncompressed size	未压缩之前的大小
+26	2	file name length	文件名长度（n）
+28	2	extra field length	扩展区长度（m）
+30	n	file name	文件名
+30+n	m	extra field	扩展区
+"""
+
+
+# 头结构
+structFileHeader = "<4s2B4HL2L2H"
+# 头结构标识
+stringFileHeader = b"PK\003\004"
+# 头结构固定区大小
+sizeFileHeader = struct.calcsize(structFileHeader)
+
+
+class FileHeadInfo(object):
+    def __init__(self, zip, offset):
+        # 文件内偏移量
+        self.offset = offset
+
+        # 按偏移量定位
+        zip.seek(offset)
+
+        # 解析头结构
+        data = zip.read(sizeFileHeader)
+        head = struct.unpack(structFileHeader, data)
+
+        # 判断是否是文件头
+        self.is_file = head[0] == stringFileHeader
+
+        if not self.is_file:
+            return
+
+        # 解析文件名，从头结构末尾开始
+        zip.seek(offset + sizeFileHeader)
+        name_len = head[10]
+        self.file_name = zip.read(name_len).decode('utf-8')
+
+        # 计算头结构总长，头固定长 + 文件名长 + 扩展区长
+        self.head_len = sizeFileHeader + name_len + head[11]
+
+        # 记录内容长度
+        self.data_len = head[8]
+
+
+def do(src_path, dst_path, handler):
+    ''' 遍历 zip 包内所有头结构并执行相应处理
+    Args:
+        src_path (str): 源 zip 包路径
+        dst_path (str): 目标 zip 包路径
+        handler (func): 处理方法
+    '''
+
+    # 打开文件
+    src = open(src_path, 'rb')
+    dst = open(dst_path, 'wb')
+
+    # 遍历所有头结构
+    offset = 0
+    while True:
+        head = FileHeadInfo(src, offset)
+        if not head.is_file:
+            break
+
+        # 写入头结构
+        src.seek(offset)
+        dst.write(src.read(head.head_len))
+
+        # 处理内容部分，并获得下一个头结构的偏移
+        offset = handler(src, dst, head)
+
+    # 写入尾部内容
+    src.seek(offset)
+    dst.write(src.read())
+
+    # 关闭文件
+    src.close()
+    dst.close()
+
+
+def unpack(src_path, dst_path, item_folder):
+    ''' 将原始 zip 包拆分存储
+    Args:
+        src_path (str):     原始 zip 包路径
+        dst_path (str):     精简后的 zip 包路径
+        item_folder (str):  文件内容存储路径
+    '''
+
+    def handler(zip, _, head):
+        # 创建目录
+
+        # 定位到头结构末尾
+        zip.seek(head.offset + head.head_len)
+
+        # 写内容到文件
+        path = os.path.join(item_folder, head.file_name)
+        folder = os.path.dirname(path)
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+        with open(path, 'wb') as f:
+            f.write(zip.read(head.data_len))
+
+        # 返回下一个头结构的偏移
+        return head.offset + head.head_len + head.data_len
+
+    return do(src_path, dst_path, handler)
+
+
+def repack(src_path, dst_path, item_folder):
+    ''' 将原始 zip 包拆分存储
+    Args:
+        src_path (str):     精简后的 zip 包路径
+        dst_path (str):     恢复后的 zip 包路径
+        item_folder (str):  文件内容存储路径
+    '''
+
+    def handler(_, zip, head):
+        # 读取内容并写入恢复文件
+        item_path = os.path.join(item_folder, head.file_name)
+        with open(item_path, 'rb') as f:
+            zip.write(f.read())
+        return head.offset + head.head_len
+
+    return do(src_path, dst_path, handler)
