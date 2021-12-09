@@ -1,0 +1,19 @@
+# Ignore thumbnails created by Windows
+Thumbs.db
+
+# Ignore thumbnails created by Mac
+.DS_Store
+
+# Ignore HFS infos created by Mac
+._*
+
+# Ignore files build by Python
+*.pyc
+
+# Ignore some log and custom config
+*.log
+*.conf
+
+# Ignore IDEs
+.idea
+.vscode
