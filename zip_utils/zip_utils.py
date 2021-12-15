@@ -6,6 +6,10 @@ import struct
 import hashlib
 
 
+# 内容抽出的阈值，先用 4k 试试，参考文件读写经验数值
+threshold = 4096
+
+
 """
 0	4	local file header signature	文件头标识(固定值0x04034b50)
 4	2	version needed to extract	解压时遵循ZIP规范的最低版本
@@ -84,8 +88,15 @@ def do(src_path, dst_path, handler):
         src.seek(offset)
         dst.write(src.read(head.head_len))
 
-        # 处理内容部分，并获得下一个头结构的偏移
-        offset = handler(src, dst, head)
+        if head.data_len < threshold:
+            # 小于阈值的直接写入，不做抽出/合并处理
+            offset += head.head_len
+            src.seek(offset)
+            dst.write(src.read(head.data_len))
+            offset += head.data_len
+        else:
+            # 抽出/合并内容部分，并获得下一个头结构的偏移
+            offset = handler(src, dst, head)
 
     # 写入尾部内容
     src.seek(offset)
