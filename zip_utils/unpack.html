@@ -21,6 +21,18 @@
         </div>
 
         <script type="text/javascript">
+            function loadPageVar(sVar) {
+                return decodeURI(
+                    window.location.search.replace(
+                        new RegExp(
+                            "^(?:.*[&\\?]" + encodeURI(sVar).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$",
+                            "i"
+                        ),
+                        "$1"
+                    )
+                );
+            }
+
             const app = Vue.createApp({
                 data() {
                     return {
@@ -31,7 +43,8 @@
 
                 methods: {},
                 created() {
-                    this.zip_loader = new zip_loader("shrink.apk", (msg) => {
+                    let url = loadPageVar("pkg");
+                    this.zip_loader = new zip_loader(url, (msg) => {
                         this.loading_state = msg;
                     });
                     this.zip_loader.start();
