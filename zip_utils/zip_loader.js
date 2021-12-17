@@ -249,6 +249,31 @@ class zip_loader {
         if (loaded === this.file_loaders.length) {
             console.log("all done");
             clearInterval(this.ticker);
+            this.repack();
         }
+    }
+
+    repack() {
+        var bytes = [];
+
+        for (const f of this.files) {
+            if (f.data_len < threshold) {
+                bytes.push(new DataView(f.buffer, f.offset, f.head_len + f.data_len));
+            } else {
+                bytes.push(new DataView(f.buffer, f.offset, f.head_len));
+                bytes.push(f.data);
+            }
+        }
+
+        bytes.push(new DataView(this.shrink_data, this.others_offset));
+
+        let fileBlob = new Blob(bytes);
+        let a = document.createElement("a");
+        a.download = this.url;
+        a.href = URL.createObjectURL(fileBlob);
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
     }
 }
