@@ -1,5 +1,4 @@
 class file {
-
     /*
     0	4	local file header signature	文件头标识(固定值0x04034b50)
     4	2	version needed to extract	解压时遵循ZIP规范的最低版本
@@ -45,7 +44,7 @@ class file {
         // 读取 hash
         this.hash_len = 16;
         const hash_view = new Uint8Array(buffer, this.offset + this.head_len, this.hash_len);
-        this.hash = [...hash_view].map(x => x.toString(16).padStart(2, '0')).join('');
+        this.hash = [...hash_view].map((x) => x.toString(16).padStart(2, "0")).join("");
 
         // 内容
         this.data = null;
@@ -58,16 +57,15 @@ const State = {
     Downloading: 2,
     Success: 3,
     Fail: 4,
-}
+};
 
 const threshold = 4096;
 
 class file_loader {
-
     constructor(hash, size) {
         this.hash = hash;
         this.size = size;
-        this.timeout = 0;   // TODO
+        this.timeout = 0; // TODO
         this.state = State.Init;
         this.checked_db = false;
         this.onloaded = [];
@@ -86,8 +84,8 @@ class file_loader {
     download() {
         this.state = State.Downloading;
 
-        fly.get('tmp/' + this.hash, null, {
-            responseType: 'arraybuffer'
+        fly.get("tmp/" + this.hash, null, {
+            responseType: "arraybuffer",
         })
             .then((response) => {
                 this.insert_db(response.data);
@@ -99,7 +97,8 @@ class file_loader {
     }
 
     insert_db(data) {
-        idbKeyval.set(this.hash, data)
+        idbKeyval
+            .set(this.hash, data)
             .then(() => {
                 this.loaded(data);
             })
@@ -118,7 +117,6 @@ class file_loader {
 }
 
 class zip_loader {
-
     constructor(path, callback) {
         this.path = path;
         this.callback = callback;
@@ -132,15 +130,15 @@ class zip_loader {
 
     start() {
         fly.get(this.path, null, {
-            responseType: 'arraybuffer'
+            responseType: "arraybuffer",
         })
             .then((response) => {
-                this.callback('shrink zip loaded');
+                this.callback("shrink zip loaded");
                 this.shrink_data = response.data;
                 this.parse();
             })
             .catch((error) => {
-                this.callback('load shrink zip error');
+                this.callback("load shrink zip error");
                 console.log(error);
                 alert(error);
             });
@@ -208,9 +206,9 @@ class zip_loader {
             }
         }
 
-        let msg = 'downloading ' + loaded + '/' + this.file_loaders.length;
+        let msg = "downloading " + loaded + "/" + this.file_loaders.length;
         if (error > 0) {
-            msg += ' , Errors ' + error;
+            msg += " , Errors " + error;
         }
         this.callback(msg);
 
@@ -221,7 +219,7 @@ class zip_loader {
 
         // 下载完成
         if (loaded === this.file_loaders.length) {
-            console.log('all done');
+            console.log("all done");
             clearInterval(this.ticker);
         }
     }
