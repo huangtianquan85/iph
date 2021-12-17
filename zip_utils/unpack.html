@@ -7,7 +7,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IPH Test</title>
     <script src="https://unpkg.com/vue@3.2.23/dist/vue.global.prod.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flyio@0.6.14/dist/fly.min.js"></script>
     <link rel="stylesheet" href="https://bulma.io/vendor/fontawesome-free-5.15.2-web/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
     <script src="https://cdn.jsdelivr.net/npm/idb-keyval@6/dist/umd.js"></script>
@@ -19,6 +18,7 @@
 
 <body>
     <div id="app">
+        <div v-if="zip_loader !== null">{{ zip_loader.url }} {{ zip_loader.shrink_data_progress }}</div>
         <div>{{ loading_state }}</div>
     </div>
 

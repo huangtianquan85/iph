@@ -67,6 +67,7 @@ class file_loader {
         this.size = size;
         this.timeout = 0; // TODO
         this.state = State.Init;
+        this.progress = 0;
         this.checked_db = false;
         this.onloaded = [];
     }
@@ -83,12 +84,11 @@ class file_loader {
 
     download() {
         this.state = State.Downloading;
-
-        fly.get("tmp/" + this.hash, null, {
-            responseType: "arraybuffer",
+        download("tmp/" + this.hash, (p) => {
+            this.progress = p;
         })
-            .then((response) => {
-                this.insert_db(response.data);
+            .then((data) => {
+                this.insert_db(data);
             })
             .catch((error) => {
                 console.log(error);
@@ -116,11 +116,39 @@ class file_loader {
     }
 }
 
+// 参考：https://zh.javascript.info/xmlhttprequest
+function download(url, progress_callback) {
+    return new Promise((resolve, reject) => {
+        let xhr = new XMLHttpRequest();
+        xhr.open("GET", url);
+        xhr.responseType = "arraybuffer";
+        xhr.send();
+
+        xhr.onload = () => {
+            if (xhr.status != 200) {
+                reject(new Error(`Error ${xhr.status}: ${xhr.statusText}`));
+                return;
+            }
+
+            resolve(xhr.response);
+        };
+
+        xhr.onerror = function () {
+            reject(new Error("Network Error"));
+        };
+
+        xhr.onprogress = (event) => {
+            progress_callback(event.loaded / event.total);
+        };
+    });
+}
+
 class zip_loader {
-    constructor(path, callback) {
-        this.path = path;
+    constructor(url, callback) {
+        this.url = url;
         this.callback = callback;
         this.shrink_data = null;
+        this.shrink_data_progress = 0;
         this.files = [];
         this.file_loaders = [];
         this.others_offset = 0;
@@ -129,12 +157,12 @@ class zip_loader {
     }
 
     start() {
-        fly.get(this.path, null, {
-            responseType: "arraybuffer",
+        download(this.url, (p) => {
+            this.shrink_data_progress = p;
         })
-            .then((response) => {
+            .then((data) => {
                 this.callback("shrink zip loaded");
-                this.shrink_data = response.data;
+                this.shrink_data = data;
                 this.parse();
             })
             .catch((error) => {
@@ -180,7 +208,7 @@ class zip_loader {
         // 记录非内容区偏移
         this.others_offset = offset;
 
-        // 开始批量加载，没秒 25 帧
+        // 开始批量加载，每秒 25 帧
         this.ticker = setInterval(() => {
             this.update();
         }, 40);
