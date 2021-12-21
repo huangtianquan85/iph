@@ -29,10 +29,12 @@ threshold = 4096
 
 # 头结构
 structFileHeader = "<4s2B4HL2L2H"
-# 头结构标识
-stringFileHeader = b"PK\003\004"
 # 头结构固定区大小
 sizeFileHeader = struct.calcsize(structFileHeader)
+# 头结构标识
+stringFileHeader = b"PK\003\004"
+# 头结构标识大小
+sizeFileHeaderMagic = len(stringFileHeader)
 
 
 class FileHeadInfo(object):
@@ -61,8 +63,15 @@ class FileHeadInfo(object):
         # 计算头结构总长，头固定长 + 文件名长 + 扩展区长
         self.head_len = sizeFileHeader + name_len + head[11]
 
+        # TODO: 判断并获取 zip64 内容大小
         # 记录内容长度
         self.data_len = head[8]
+
+
+def is_file_entry(file, offset):
+    file.seek(offset)
+    m = file.read(sizeFileHeaderMagic)
+    return m == stringFileHeader
 
 
 def do(src_path, dst_path, handler):
@@ -73,34 +82,42 @@ def do(src_path, dst_path, handler):
         handler:  处理方法
     '''
 
+    # 获取 src 文件大小
+    src_size = os.path.getsize(src_path)
+
     # 打开文件
     src = open(src_path, 'rb')
     dst = open(dst_path, 'wb')
 
     # 遍历所有头结构
+    last_offset = 0
     offset = 0
-    while True:
+    while offset < src_size - sizeFileHeader:
+        if not is_file_entry(src, offset):
+            offset += 1
+            continue
+
         head = FileHeadInfo(src, offset)
-        if not head.is_file:
-            break
-
-        # 写入头结构
-        src.seek(offset)
-        dst.write(src.read(head.head_len))
-
         if head.data_len < threshold:
             # 小于阈值的直接写入，不做抽出/合并处理
-            offset += head.head_len
-            src.seek(offset)
-            dst.write(src.read(head.data_len))
-            offset += head.data_len
+            offset += head.head_len + head.data_len
         else:
+            # 大于阈值先写入头结构
+            offset += head.head_len
+
+        # 写入 last_offset 到 offset 之间的数据
+        src.seek(last_offset)
+        dst.write(src.read(offset - last_offset))
+
+        if head.data_len >= threshold:
             # 抽出/合并内容部分，并获得下一个头结构的偏移
             offset = handler(src, dst, head)
 
+        last_offset = offset
+
     # 写入尾部内容
-    src.seek(offset)
-    dst.write(src.read())
+    src.seek(last_offset)
+    dst.write(src.read(src_size - last_offset))
 
     # 关闭文件
     src.close()
