@@ -59,7 +59,7 @@ const State = {
     Fail: 4,
 };
 
-const threshold = 4096;
+const threshold = 4096; // TODO: > threshold
 
 class file_loader {
     constructor(hash, size) {
