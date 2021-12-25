@@ -1,53 +1,102 @@
 class file {
     /*
-    0	4	local file header signature	文件头标识(固定值0x04034b50)
-    4	2	version needed to extract	解压时遵循ZIP规范的最低版本
-    6	2	general purpose bit flag	通用标志位
-    8	2	compression method	压缩方式
-    10	2	last mod file time	最后修改时间（MS - DOS格式）
-    12	2	last mod file date	最后修改日期（MS - DOS格式）
-    14	4	crc - 32	冗余校验码
-    18	4	compressed size	压缩后的大小
-    22	4	uncompressed size	未压缩之前的大小
-    26	2	file name length	文件名长度（n）
-    28	2	extra field length	扩展区长度（m）
-    30	n	file name	文件名
-    30+n m	extra field	扩展区
+    0   central file header signature   4 bytes  (0x02014b50)
+    4   version made by                 2 bytes
+    6   version needed to extract       2 bytes
+    8   general purpose bit flag        2 bytes
+    10  compression method              2 bytes
+    12  last mod file time              2 bytes
+    14  last mod file date              2 bytes
+    16  crc-32                          4 bytes
+    20  compressed size                 4 bytes  (压缩后大小)
+    24  uncompressed size               4 bytes
+    28  file name length                2 bytes  (文件名长度)
+    30  extra field length              2 bytes  (扩展区长度)
+    32  file comment length             2 bytes  (注释长度)
+    34  disk number start               2 bytes
+    36  internal file attributes        2 bytes
+    38  external file attributes        4 bytes
+    42  relative offset of local header 4 bytes  (文件存储区头结构偏移)
+
+        file name (variable size)
+        extra field (variable size)
+        file comment (variable size)
     */
 
     constructor(buffer, offset) {
         this.buffer = buffer;
-        this.offset = offset;
 
-        // 头部固定数据段长度 30
-        const fixed_len = 30;
+        // 头部固定数据段长度
+        const fixed_len = 46;
 
         // 头结构视图
         const view = new DataView(buffer, offset, fixed_len);
 
-        // 判断是否是文件头，DataView Get 方法 true 为小端法
-        this.is_file = view.getInt32(0, true) === 0x04034b50;
-
-        if (!this.is_file) {
+        // 判断签名是否匹配，DataView Get 方法 true 为小端法
+        this.match_sign = view.getInt32(0, true) === 0x02014b50;
+        if (!this.match_sign) {
             return;
         }
 
-        // 解析文件名，从头结构末尾开始
-        this.name_len = view.getInt16(26, true);
-        // this.file_name = String.fromCharCode.apply(null, new Uint8Array(buffer, offset + fixed_len, name_len));
-
-        // 计算头结构总长，头固定长 + 文件名长 + 扩展区长
-        this.head_len = fixed_len + this.name_len + view.getInt16(28, true);
+        // 文件名长度
+        let name_len = view.getInt16(28, true);
+        // 文件名
+        this.name = String.fromCharCode.apply(null, new Uint8Array(buffer, offset + fixed_len, name_len));
+        // 计算本数据段总长，固定长度 + 文件名长度 + 扩展区长度 + 注释区长度
+        this.info_len = fixed_len + name_len + view.getInt16(30, true) + view.getInt16(32, true);
         // 记录内容长度
-        this.data_len = view.getInt32(18, true);
+        this.compressed_size = view.getInt32(20, true);
 
-        // 读取 hash
+        // if (this.compressed_size > threshold) {
+        //     console.log(this.compressed_size, this.name);
+        // }
+
+        // 内容 hash
         this.hash_len = 16;
-        const hash_view = new Uint8Array(buffer, this.offset + this.head_len, this.hash_len);
-        this.hash = [...hash_view].map((x) => x.toString(16).padStart(2, "0")).join("");
+        this.hash = "";
 
+        // 文件区的头结构偏移
+        this.header_offset = view.getInt32(42, true);
+        // 文件区的头结构大小
+        this.header_len = 0;
         // 内容
         this.data = null;
+    }
+
+    // 读取记录在存储区的文件内容 hash
+    load_hash() {
+        const hash_view = new Uint8Array(this.buffer, this.header_offset + this.header_len, this.hash_len);
+        this.hash = [...hash_view].map((x) => x.toString(16).padStart(2, "0")).join("");
+    }
+
+    // 获取文件区文件头结构的长度
+    parse_header_len() {
+        /*
+        Get local file header total length
+
+        0   local file header signature     4 bytes  (0x04034b50)
+        4   version needed to extract       2 bytes
+        6   general purpose bit flag        2 bytes
+        8   compression method              2 bytes
+        10  last mod file time              2 bytes
+        12  last mod file date              2 bytes
+        14  crc-32                          4 bytes
+        18  compressed size                 4 bytes
+        22  uncompressed size               4 bytes
+        26  file name length                2 bytes  (文件名长度)
+        28  extra field length              2 bytes  (扩展区长度)
+
+            file name (variable size)
+            extra field (variable size)
+        */
+        let fixed_len = 30;
+        const view = new DataView(this.buffer, this.header_offset, fixed_len);
+        this.header_len = fixed_len + view.getInt16(26, true) + view.getInt16(28, true);
+    }
+
+    // 设置文件区文件头结构的真实偏移
+    set_real_header_offset(offset) {
+        this.header_offset = offset;
     }
 }
 
@@ -156,6 +205,7 @@ class zip_loader {
         this.ticker = null;
     }
 
+    // 开始下载精简版本 zip
     start() {
         download(this.url, (p) => {
             this.shrink_data_progress = p;
@@ -172,34 +222,35 @@ class zip_loader {
             });
     }
 
+    // 解析精简版本 zip
     parse() {
         let buffer = this.shrink_data;
         let offset = 0;
         let loaders = {};
 
-        // 遍历所有头结构
-        while (true) {
-            let f = new file(buffer, offset);
+        let dir = this.parse_EOCD(buffer);
+        this.files = this.parse_directory(buffer, dir.offset, dir.size);
 
-            if (!f.is_file) {
-                break;
+        // 抽出大小，用于修正精简版 zip 中文件头的偏移
+        let ex_size = 0;
+        // 遍历所有文件待处理文件
+        for (const f of this.files) {
+            // 计算头结构修正偏移
+            f.set_real_header_offset(f.header_offset - ex_size);
+            // 获取头结构大小
+            f.parse_header_len();
+
+            // 加载内容 hash
+            f.load_hash();
+
+            // 根据内容 hash 创建下载器（ zip 内相同的文件只会下载一份 ）
+            if (!loaders.hasOwnProperty(f.hash)) {
+                loaders[f.hash] = new file_loader(f.hash, f.compressed_size);
             }
+            loaders[f.hash].onloaded.push(f);
 
-            this.files.push(f);
-
-            if (f.data_len < threshold) {
-                // 小文件就在 shrink zip 里，无需下载，直接返回下一个的偏移
-                offset = f.offset + f.head_len + f.data_len;
-            } else {
-                // 根据内容 hash 创建下载器（ zip 内相同的文件只会下载一份 ）
-                if (!loaders.hasOwnProperty(f.hash)) {
-                    loaders[f.hash] = new file_loader(f.hash, f.data_len);
-                }
-                loaders[f.hash].onloaded.push(f);
-
-                // 下一个
-                offset = f.offset + f.head_len + f.hash_len;
-            }
+            // 修正头结构偏移
+            ex_size += f.compressed_size - f.hash_len;
         }
 
         // 转为列表
@@ -214,8 +265,77 @@ class zip_loader {
         }, 40);
     }
 
+    // 解析中央目录结束标记，返回中央目录偏移和大小
+    parse_EOCD(buffer) {
+        /*
+        重点: **中央目录中文件信息是连续的，且其后紧跟结束标记（zip64 除外，本项目暂不支持 zip64）**
+        因为中央目录结束标记中记录的中央目录偏移是针对文件头的编译
+        所以精简版 zip 这个偏移无法命中，也无法计算（需要先解析中央目录）
+        只能这样计算: 中央目录结束标记偏移 - 目录大小
+
+        End of central directory record
+
+        0   end of central dir signature    4 bytes  (0x06054b50)
+        4   number of this disk             2 bytes
+        6   number of the disk with the
+            start of the central directory  2 bytes
+        8   total number of entries in the
+            central directory on this disk  2 bytes
+        10  total number of entries in
+            the central directory           2 bytes
+        12  size of the central directory   4 bytes  (中央目录大小)
+        16  offset of start of central
+            directory with respect to
+            the starting disk number        4 bytes
+        20  .ZIP file comment length        2 bytes
+        22  .ZIP file comment               (variable size)
+        */
+
+        // EOCD固定数据段长度
+        const fixed_len = 22;
+        // 起始搜索位置近似值
+        let offset = buffer.byteLength - fixed_len;
+        while (offset > 0) {
+            const view = new DataView(buffer, offset, fixed_len);
+            if (view.getInt32(0, true) !== 0x06054b50) {
+                offset -= 1;
+                continue;
+            }
+            let size = view.getInt32(12, true);
+            return {
+                size: size,
+                offset: offset - size,
+            };
+        }
+        return null;
+    }
+
+    // 遍历中央目录中的所有文件信息
+    parse_directory(buffer, dir_offset, dir_size) {
+        let file_infos = [];
+        let offset = dir_offset;
+        let end = dir_offset + dir_size;
+        while (offset < end) {
+            let f = new file(buffer, offset);
+            // 过滤掉小于 4k 的文件
+            if (f.compressed_size > threshold) {
+                file_infos.push(f);
+            }
+            offset += f.info_len;
+        }
+
+        // 按偏移量排序（中央目录不保证顺序，但不会有两个文件共用存储，结构上就不支持）
+        /*
+        From Wikipedia Zip Format:
+        The order of the file entries in the central directory 
+        need not coincide with the order of file entries in the archive
+        */
+        file_infos.sort((a, b) => a.header_offset - b.header_offset);
+        return file_infos;
+    }
+
+    // 扫描下载/加载状态
     update() {
-        // 扫描下载/加载状态
         let need_download = [];
         let loaded = 0;
         let error = 0;
@@ -253,19 +373,26 @@ class zip_loader {
         }
     }
 
+    // 重组 zip 包
     repack() {
         var bytes = [];
 
+        // 光标，记录上一次处理到的位置
+        let cursor = 0;
+        // 遍历所有文件待处理文件
         for (const f of this.files) {
-            if (f.data_len < threshold) {
-                bytes.push(new DataView(f.buffer, f.offset, f.head_len + f.data_len));
-            } else {
-                bytes.push(new DataView(f.buffer, f.offset, f.head_len));
-                bytes.push(f.data);
-            }
+            // 写入上一个处理位置到此头结构结尾的数据
+            let offset = f.header_offset + f.header_len;
+            bytes.push(new DataView(f.buffer, cursor, offset - cursor));
+
+            // 写入文件内容
+            bytes.push(f.data);
+
+            // 光标置于文件内容区末尾（精简版只需要跳过 hash 的长度）
+            cursor = offset + f.hash_len;
         }
 
-        bytes.push(new DataView(this.shrink_data, this.others_offset));
+        bytes.push(new DataView(this.shrink_data, cursor));
 
         let fileBlob = new Blob(bytes);
         let a = document.createElement("a");

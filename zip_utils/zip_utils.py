@@ -34,7 +34,7 @@ class FileInfo(object):
     13  disk number start               2 bytes
     14  internal file attributes        2 bytes
     15  external file attributes        4 bytes
-    16  relative offset of local header 4 bytes
+    16  relative offset of local header 4 bytes  (文件存储区头结构偏移)
 
         file name (variable size)
         extra field (variable size)
