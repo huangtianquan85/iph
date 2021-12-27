@@ -108,7 +108,7 @@ const State = {
     Fail: 4,
 };
 
-const threshold = 4096; // TODO: > threshold
+const threshold = 4096;
 
 class file_loader {
     constructor(hash, size) {
@@ -116,6 +116,7 @@ class file_loader {
         this.size = size;
         this.timeout = 0; // TODO
         this.state = State.Init;
+        this.in_cache = true;
         this.progress = 0;
         this.checked_db = false;
         this.onloaded = [];
@@ -125,6 +126,7 @@ class file_loader {
         idbKeyval.get(this.hash).then((data) => {
             if (data === undefined) {
                 this.state = State.NeedDownload;
+                this.in_cache = false;
             } else {
                 this.loaded(data);
             }
@@ -193,14 +195,14 @@ function download(url, progress_callback) {
 }
 
 class zip_loader {
-    constructor(url, callback) {
+    constructor(url) {
         this.url = url;
-        this.callback = callback;
         this.shrink_data = null;
         this.shrink_data_progress = 0;
         this.files = [];
         this.file_loaders = [];
-        this.others_offset = 0;
+        this.download_queue = [];
+        this.download_state = null;
         this.max_downloader = 5;
         this.ticker = null;
     }
@@ -211,21 +213,18 @@ class zip_loader {
             this.shrink_data_progress = p;
         })
             .then((data) => {
-                this.callback("shrink zip loaded");
                 this.shrink_data = data;
                 this.parse();
             })
             .catch((error) => {
-                this.callback("load shrink zip error");
                 console.log(error);
-                alert(error);
+                alert("download shrink package error: " + error);
             });
     }
 
     // 解析精简版本 zip
     parse() {
         let buffer = this.shrink_data;
-        let offset = 0;
         let loaders = {};
 
         let dir = this.parse_EOCD(buffer);
@@ -255,9 +254,6 @@ class zip_loader {
 
         // 转为列表
         this.file_loaders = Object.values(loaders);
-
-        // 记录非内容区偏移
-        this.others_offset = offset;
 
         // 开始批量加载，每秒 25 帧
         this.ticker = setInterval(() => {
@@ -337,8 +333,10 @@ class zip_loader {
     // 扫描下载/加载状态
     update() {
         let need_download = [];
+        // loaded + error 和 file_loaders.length 比较来确定加载总进度
         let loaded = 0;
         let error = 0;
+        // 控制下载线程数
         let downloading = 0;
         for (const l of this.file_loaders) {
             if (l.state === State.Init) {
@@ -354,23 +352,47 @@ class zip_loader {
             }
         }
 
-        let msg = "downloading " + loaded + "/" + this.file_loaders.length;
-        if (error > 0) {
-            msg += " , Errors " + error;
-        }
-        this.callback(msg);
-
         // 添加下载
         for (let i = 0; i < Math.min(this.max_downloader - downloading, need_download.length); i++) {
             need_download[i].download();
+            this.download_queue.push(need_download[i]);
         }
 
-        // 下载完成
-        if (loaded === this.file_loaders.length) {
+        // 清理下载队列
+        this.download_queue = this.download_queue.filter((l) => l.state === State.Downloading);
+
+        // 刷新状态
+        this.update_download_state();
+
+        // 下载完成, TODO: retry when error
+        if (loaded + error === this.file_loaders.length) {
             console.log("all done");
             clearInterval(this.ticker);
             this.repack();
         }
+    }
+
+    update_download_state() {
+        let s = {
+            total_num: 0,
+            total_size: 0,
+            downloaded_num: 0,
+            downloaded_size: 0,
+            error_num: 0,
+        };
+        for (const l of this.file_loaders) {
+            if (!l.in_cache) {
+                s.total_num++;
+                s.total_size += l.size;
+                s.downloaded_size += l.size * l.progress;
+                if (l.state === State.Success) {
+                    s.downloaded_num++;
+                } else if (l.state === State.Fail) {
+                    s.error_num++;
+                }
+            }
+        }
+        this.download_state = s;
     }
 
     // 重组 zip 包
