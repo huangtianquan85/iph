@@ -79,10 +79,10 @@
 
         <script type="text/javascript">
             function loadPageVar(sVar) {
-                return decodeURI(
+                return decodeURIComponent(
                     window.location.search.replace(
                         new RegExp(
-                            "^(?:.*[&\\?]" + encodeURI(sVar).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$",
+                            "^(?:.*[&\\?]" + encodeURIComponent(sVar).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$",
                             "i"
                         ),
                         "$1"
