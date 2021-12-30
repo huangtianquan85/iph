@@ -19,6 +19,10 @@ def repack(src_path, dst_path, item_folder):
     with open(src_path, 'rb') as f:
         buffer = f.read()
 
+    # 抽取原始压缩文件 hash
+    origin_hash = buffer[-zip_utils.hash_len:].hex()
+    buffer = buffer[:-zip_utils.hash_len]
+
     file_infos = zip_utils.get_file_infos(buffer)
 
     # 准备输出文件
@@ -31,8 +35,8 @@ def repack(src_path, dst_path, item_folder):
     # 遍历所有文件
     for f in file_infos:
         header_offset = f.header_offset - ex_size
-        offset = header_offset + \
-            zip_utils.get_header_len(buffer, header_offset)
+        offset = (header_offset +
+                  zip_utils.get_header_len(buffer, header_offset))
         # 写入 cursor 到 offset 之间的数据
         dst.write(buffer[cursor:offset])
 
