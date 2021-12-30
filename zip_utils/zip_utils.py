@@ -8,6 +8,8 @@ import hashlib
 
 # 内容抽出的阈值，先用 4k 试试，参考文件读写经验数值
 threshold = 4096
+# md5 hash 长度
+hash_len = 16
 
 '''
 参考资源
@@ -157,113 +159,6 @@ def get_header_len(buffer, offset):
     return fixed_len + data[9] + data[10]
 
 
-def do(src_path, dst_path, handler):
-    ''' 遍历 zip 包内所有头结构并执行相应处理
-    Args:
-        src_path: 源 zip 包路径
-        dst_path: 目标 zip 包路径
-        handler:  处理方法
-    '''
-
-    # 打开文件
-    with open(src_path, 'rb') as f:
-        buffer = f.read()
-
+def get_file_infos(buffer):
     dir_size, dir_offset = parse_EOCD(buffer)
-    file_infos = parse_directory(buffer, dir_offset, dir_size)
-
-    # 准备输出文件
-    dst = open(dst_path, 'wb')
-
-    # 光标，记录上一次处理到的位置
-    cursor = 0
-    # 抽出大小，用于修正精简版 zip 中文件头的偏移
-    ex_size = 0
-    # 遍历所有文件
-    for f in file_infos:
-        header_offset = f.header_offset - ex_size
-        offset = header_offset + get_header_len(buffer, header_offset)
-        # 写入 cursor 到 offset 之间的数据
-        dst.write(buffer[cursor:offset])
-        # 处理文件内容
-        size, fix_offset = handler(buffer, offset, f.compressed_size, dst)
-        # 光标置于文件内容区末尾（由抽出/合并方法来计算）
-        cursor = offset + size
-        # 偏移修正
-        ex_size += fix_offset
-
-    # 写入尾部内容
-    dst.write(buffer[cursor:])
-    # 关闭文件
-    dst.close()
-
-
-def unpack(src_path, dst_path, item_folder):
-    ''' 将原始 zip 包拆分存储
-    Args:
-        src_path:    原始 zip 包路径
-        dst_path:    精简后的 zip 包路径
-        item_folder: 文件内容存储路径
-    '''
-
-    def handler(buffer, offset, compressed_size, dst):
-        ''' 处理单个文件
-        Args:
-            buffer: 原始 zip 文件字节数组
-            offset: 压缩内容偏移
-            compressed_size: 压缩后大小
-            dst: 精简后的 zip 文件句柄
-        '''
-        data = buffer[offset:offset+compressed_size]
-
-        # 计算 hash
-        m = hashlib.md5()
-        m.update(data)
-        hash = m.hexdigest()
-
-        # 写内容到文件
-        path = os.path.join(item_folder, hash)
-        if not os.path.exists(path):
-            with open(path, 'wb') as f:
-                f.write(data)
-
-        # 记录 hash
-        dst.write(m.digest())
-
-        # 返回处理的数据大小，偏移修正量
-        return compressed_size, 0
-
-    return do(src_path, dst_path, handler)
-
-
-def repack(src_path, dst_path, item_folder):
-    ''' 将精简后的 zip 恢复
-    Args:
-        src_path:    精简后的 zip 包路径
-        dst_path:    恢复后的 zip 包路径
-        item_folder: 文件内容存储路径
-    '''
-
-    hash_len = 16
-
-    def handler(buffer, offset, compressed_size, dst):
-        ''' 处理单个文件
-        Args:
-            buffer: 精简后的 zip 文件字节数组
-            offset: 压缩内容偏移
-            compressed_size: 压缩后大小
-            dst: 恢复后的 zip 文件句柄
-        '''
-
-        # 读取 hash
-        hash = buffer[offset:offset+hash_len].hex()
-
-        # 读取内容并写入恢复文件
-        path = os.path.join(item_folder, hash)
-        with open(path, 'rb') as f:
-            dst.write(f.read())
-
-        # 返回处理的数据大小，偏移修正量
-        return hash_len, compressed_size - hash_len
-
-    return do(src_path, dst_path, handler)
+    return parse_directory(buffer, dir_offset, dir_size)

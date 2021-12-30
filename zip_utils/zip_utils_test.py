@@ -6,6 +6,8 @@ import sys
 import shutil
 import hashlib
 import zip_utils
+import zip_shrink
+import zip_repack
 import datetime
 
 
@@ -42,13 +44,13 @@ if __name__ == '__main__':
     start = datetime.datetime.now()
 
     # unpack
-    zip_utils.unpack(src, shrink, unpack_folder)
+    zip_shrink.shrink(src, shrink, unpack_folder)
     now = datetime.datetime.now()
     print('unpack use %d seconds' % (now - start).seconds)
     print(shrink, os.path.getsize(shrink))
 
     # repack
-    zip_utils.repack(shrink, repack, unpack_folder)
+    zip_repack.repack(shrink, repack, unpack_folder)
     now = datetime.datetime.now()
     print('repack use %d seconds' % (now - start).seconds)
 
