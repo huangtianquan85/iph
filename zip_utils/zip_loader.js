@@ -1,3 +1,11 @@
+const threshold = 4096;
+const hash_len = 16;
+
+function get_hash_str(buffer, offset) {
+    const hash_view = new Uint8Array(buffer, offset, hash_len);
+    return [...hash_view].map((x) => x.toString(16).padStart(2, "0")).join("");
+}
+
 class file {
     /*
     0   central file header signature   4 bytes  (0x02014b50)
@@ -52,7 +60,6 @@ class file {
         // }
 
         // 内容 hash
-        this.hash_len = 16;
         this.hash = "";
 
         // 文件区的头结构偏移
@@ -65,8 +72,7 @@ class file {
 
     // 读取记录在存储区的文件内容 hash
     load_hash() {
-        const hash_view = new Uint8Array(this.buffer, this.header_offset + this.header_len, this.hash_len);
-        this.hash = [...hash_view].map((x) => x.toString(16).padStart(2, "0")).join("");
+        this.hash = get_hash_str(this.buffer, this.header_offset + this.header_len);
     }
 
     // 获取文件区文件头结构的长度
@@ -107,8 +113,6 @@ const State = {
     Success: 3,
     Fail: 4,
 };
-
-const threshold = 4096;
 
 class file_loader {
     constructor(hash, size) {
@@ -199,6 +203,7 @@ class zip_loader {
         this.url = url;
         this.shrink_data = null;
         this.shrink_data_progress = 0;
+        this.origin_hash = "";
         this.files = [];
         this.file_loaders = [];
         this.download_queue = [];
@@ -225,6 +230,16 @@ class zip_loader {
     // 解析精简版本 zip
     parse() {
         let buffer = this.shrink_data;
+
+        // 抽取写在文件末尾的原始文件 hash
+        let end = buffer.byteLength - hash_len;
+        this.origin_hash = get_hash_str(buffer, end);
+
+        // 去掉末尾 hash 部分
+        buffer = buffer.slice(0, end);
+        this.shrink_data = buffer;
+
+        // 开始解析
         let loaders = {};
 
         let dir = this.parse_EOCD(buffer);
@@ -249,7 +264,7 @@ class zip_loader {
             loaders[f.hash].onloaded.push(f);
 
             // 修正头结构偏移
-            ex_size += f.compressed_size - f.hash_len;
+            ex_size += f.compressed_size - hash_len;
         }
 
         // 转为列表
@@ -398,6 +413,12 @@ class zip_loader {
     // 重组 zip 包
     repack() {
         var bytes = [];
+        var hash = md5.create();
+
+        function append(byte_range) {
+            bytes.push(byte_range);
+            hash.update(byte_range);
+        }
 
         // 光标，记录上一次处理到的位置
         let cursor = 0;
@@ -405,16 +426,22 @@ class zip_loader {
         for (const f of this.files) {
             // 写入上一个处理位置到此头结构结尾的数据
             let offset = f.header_offset + f.header_len;
-            bytes.push(new DataView(f.buffer, cursor, offset - cursor));
+            append(new Uint8Array(f.buffer, cursor, offset - cursor));
 
             // 写入文件内容
-            bytes.push(f.data);
+            append(new Uint8Array(f.data));
 
             // 光标置于文件内容区末尾（精简版只需要跳过 hash 的长度）
-            cursor = offset + f.hash_len;
+            cursor = offset + hash_len;
         }
 
-        bytes.push(new DataView(this.shrink_data, cursor));
+        append(new Uint8Array(this.shrink_data, cursor));
+
+        console.log(hash.hex());
+        if (this.origin_hash !== hash.hex()) {
+            alert("hash check error");
+            return;
+        }
 
         let fileBlob = new Blob(bytes);
         let a = document.createElement("a");
