@@ -86,7 +86,8 @@ if __name__ == '__main__':
     commit_path = os.path.join(index_folder, date_hash + '.commit')
     shrink_pkg_path = os.path.join(
         index_folder, date_hash + os.path.splitext(pkg_path)[1])
-    last_commit_path = os.path.join(base_folder, 'last-' + ppb + '.commit')
+    last_commit_path = os.path.join(
+        base_folder, 'last-%s-%s.commit' % (ppb, date_hash))
     # 测试文件
     tmp = os.path.join(base_folder, 'tmp')
 
