@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import struct
-import hashlib
 import zip_utils
 
 

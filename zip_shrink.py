@@ -2,12 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import os
-import struct
 import hashlib
 import zip_utils
 
 
-def shrink(src_path, dst_path, item_folder):
+def shrink(src_path, dst_path, item_folder, content_monitor=None):
     ''' 将原始 zip 包拆分存储
     Args:
         src_path:    原始 zip 包路径
@@ -61,6 +60,9 @@ def shrink(src_path, dst_path, item_folder):
             with open(path, 'wb') as file:
                 file.write(data)
 
+        if content_monitor != None:
+            content_monitor(f.name, hash)
+
         # 记录 hash
         dst.write(m.digest())
 
@@ -70,7 +72,10 @@ def shrink(src_path, dst_path, item_folder):
     # 处理尾部内容
     handle_seg(buffer[cursor:])
     # 写入源文件 hash
-    dst.write(src_m.digest())
+    hash = src_m.digest()
+    dst.write(hash)
 
     # 关闭文件
     dst.close()
+
+    return hash

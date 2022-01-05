@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
 import struct
-import hashlib
 
 
 # 内容抽出的阈值，先用 4k 试试，参考文件读写经验数值
