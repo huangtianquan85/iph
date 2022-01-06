@@ -41,10 +41,8 @@ def get_file_md5(path):
 if __name__ == '__main__':
     # 项目名称
     project_name = sys.argv[1]
-    # 目标平台，Android/iOS
-    platform = sys.argv[2]
     # 构建包
-    pkg_path = sys.argv[3]
+    pkg_path = sys.argv[2]
 
     # 获取 git 提交信息
     branch = shell_output('git rev-parse --abbrev-ref HEAD')
@@ -65,10 +63,13 @@ if __name__ == '__main__':
     '''
     目录结构
     upload
-        last-<平台>-<项目>-<分之>.commit
-        <平台>-<项目>-<分之>
+        last-<项目>-<分支>.commit
+        <项目>-<分支>
             2022-01-01-<git_hash>.commit
             2022-01-01-<git_hash>.apk
+            2022-01-01-<git_hash>.apk.meta
+            2022-01-01-<git_hash>.ipa
+            2022-01-01-<git_hash>.ipa.meta
             ...
         blocks
             <md5>
@@ -79,15 +80,15 @@ if __name__ == '__main__':
     base_folder = 'upload'
     blocks_folder = os.path.join(base_folder, 'blocks')
     # 平台-项目-分支
-    ppb = '%s-%s-%s' % (platform, project_name, branch)
-    index_folder = os.path.join(base_folder, ppb)
+    proj_branch = '%s-%s' % (project_name, branch)
+    index_folder = os.path.join(base_folder, proj_branch)
     # 日期-git_Hash
     date_hash = '%s-%s' % (commit_time[:10], git_version)
     commit_path = os.path.join(index_folder, date_hash + '.commit')
     shrink_pkg_path = os.path.join(
         index_folder, date_hash + os.path.splitext(pkg_path)[1])
     last_commit_path = os.path.join(
-        base_folder, 'last-%s-%s.commit' % (ppb, date_hash))
+        base_folder, 'last-%s-%s.commit' % (proj_branch, date_hash))
     # 测试文件
     tmp = os.path.join(base_folder, 'tmp')
 
