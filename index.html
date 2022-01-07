@@ -162,11 +162,7 @@
                 methods: {
                     show_folder(commit) {
                         if (this.folder !== "") return;
-                        this.folder = `${commit.project}-${commit.branch}`;
-                        this.load_commits(this.folder);
-                    },
-                    show_root() {
-                        this.load_commits("last-");
+                        window.location.hash = `${commit.project}-${commit.branch}`;
                     },
                     load_commits(prefix) {
                         this.commits = [];
@@ -183,9 +179,19 @@
                                 console.log(err);
                             });
                     },
+                    on_location_hash_change() {
+                        if (window.location.hash.length > 1) {
+                            this.folder = window.location.hash.substring(1);
+                            this.load_commits(this.folder);
+                        } else {
+                            this.folder = "";
+                            this.load_commits("last-");
+                        }
+                    },
                 },
                 created() {
-                    this.show_root();
+                    window.addEventListener("hashchange", this.on_location_hash_change);
+                    this.on_location_hash_change();
                 },
             }).mount("#app");
         </script>
