@@ -139,7 +139,7 @@ class file_loader {
 
     download() {
         this.state = State.Downloading;
-        download("tmp/" + this.hash, (p) => {
+        download("blocks/" + this.hash, (p) => {
             this.progress = p;
         })
             .then((data) => {
@@ -201,6 +201,8 @@ function download(url, progress_callback) {
 class zip_loader {
     constructor(url) {
         this.url = url;
+        let arr = url.split("/");
+        this.name = arr[arr.length - 1];
         this.shrink_data = null;
         this.shrink_data_progress = 0;
         this.origin_hash = "";

@@ -136,7 +136,7 @@
                             <div class="mt-2">
                                 <div v-for="pkg in c.packages">
                                     <img class="avatar avatar-1 mr-1" :src="pkg.icon_url" />
-                                    <span class="text-small text-bold color-fg-accent mt-1"
+                                    <span class="text-small text-bold color-fg-accent mt-1" @click="download(pkg.url)"
                                         >{{ pkg.url.split('/')[1] }}</span
                                     >
                                 </div>
@@ -178,6 +178,9 @@
                             .catch((err) => {
                                 console.log(err);
                             });
+                    },
+                    download(url) {
+                        window.open("pkg_loader.html?pkg=" + base_url + url, "_blank");
                     },
                     on_location_hash_change() {
                         if (window.location.hash.length > 1) {
