@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>(IPH) Incremental Package Hub</title>
+        <script src="https://unpkg.com/vue@3.2.23/dist/vue.global.prod.js"></script>
+        <link href="https://unpkg.com/@primer/css@^19.1.1/dist/primer.css" rel="stylesheet" />
+        <script src="https://unpkg.com/flyio/dist/fly.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/cos-js-sdk-v5/dist/cos-js-sdk-v5.min.js"></script>
+        <script>
+            const cos_id = "AKIDDG3ZppdBSTDgsoTqwrVsynMegRxCAsKV";
+            const cos_key = "wbz6wWrvjHYZIkvpTqwlJbcNr4RYOxFG";
+            const base_url = "https://autopkg-bj-1258787308.cos.ap-beijing.myqcloud.com/";
+
+            const cos = new COS({
+                SecretId: cos_id,
+                SecretKey: cos_key,
+            });
+
+            function list_files(prefix) {
+                return new Promise((resolve, reject) => {
+                    cos.getBucket(
+                        {
+                            Bucket: "autopkg-bj-1258787308",
+                            Region: "ap-beijing",
+                            Prefix: prefix,
+                        },
+                        function (err, data) {
+                            if (err) {
+                                reject(new Error(`Error ${err}`));
+                            } else {
+                                resolve(data.Contents);
+                            }
+                        }
+                    );
+                });
+            }
+
+            function load_json(url) {
+                return fly.get(base_url + url, null, {
+                    responseType: "json",
+                });
+            }
+
+            function handle_error(err) {
+                alert(err);
+                console.log(err);
+            }
+
+            function load_commit(url, commits, sort_func) {
+                load_json(url)
+                    .then((response) => {
+                        let c = response.data;
+                        c.packages = Vue.ref([]);
+                        commits.push(c);
+                        list_files(`${c.project}-${c.branch}/${c.datetime.substring(0, 10)}-${c.short_id}`)
+                            .then((data) => {
+                                load_packages(data, c);
+                            })
+                            .catch((err) => {
+                                handle_error(err);
+                            });
+                    })
+                    .catch((err) => {
+                        handle_error(err);
+                    });
+            }
+
+            function load_packages(data, commit) {
+                for (const i of data) {
+                    if (i.Key.endsWith(".meta")) {
+                        load_json(i.Key)
+                            .then((response) => {
+                                let p = response.data;
+                                p.icon_url = base_url + p.icon;
+                                console.log(p);
+                                commit.packages.value.push(p);
+                            })
+                            .catch((err) => {
+                                handle_error(err);
+                            });
+                    }
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <div class="Header d-block position-sticky top-0">
+            <div class="container-sm">
+                <div class="Header-item">
+                    <div class="Header-link f4 d-flex flex-items-center">
+                        <svg
+                            height="32"
+                            class="octicon octicon-mark-github mr-2"
+                            viewBox="0 0 1024 1024"
+                            version="1.1"
+                            width="32"
+                            aria-hidden="true"
+                        >
+                            <path
+                                d="M218.453333 213.333333l34.56-42.666666h512l40.106667 42.666666M512 746.666667L277.333333 512H426.666667v-85.333333h170.666666v85.333333h149.333334L512 746.666667m364.373333-523.52l-59.306666-71.68C805.546667 136.96 788.053333 128 768 128H256c-20.053333 0-37.546667 8.96-49.493333 23.466667L147.626667 223.146667C135.253333 237.653333 128 256 128 277.333333V810.666667a85.333333 85.333333 0 0 0 85.333333 85.333333h597.333334a85.333333 85.333333 0 0 0 85.333333-85.333333V277.333333c0-21.333333-7.253333-39.68-19.626667-54.186666z"
+                                fill-rule="evenodd"
+                            ></path>
+                        </svg>
+                        <span>Incremental Package Hub</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="app" class="container-sm">
+            <div>
+                <div v-for="c in commits" class="mx-3">
+                    <div :class="is_root ? 'border color-shadow-medium p-3 rounded-3 mt-3' : 'TimelineItem'">
+                        <div :class="is_root ? 'float-left mr-3' : 'TimelineItem-badge'">
+                            <img
+                                @click="show_folder(c)"
+                                :class="is_root ? 'avatar avatar-8 rounded-3' : 'avatar avatar-4'"
+                                :src="c.packages.length > 0 ? c.packages[0].icon_url : ''"
+                            />
+                        </div>
+                        <div class="overflow-hidden">
+                            <div class="lh-condensed">
+                                <span v-if="is_root" class="h4 text-uppercase">{{ c.project }}</span>
+                                <div :class="is_root ? 'float-right' : ''">
+                                    <span v-if="is_root">&nbsp;</span>
+                                    <span class="branch-name">{{ c.branch }}</span>
+                                    <span>&nbsp;</span>
+                                    <span class="Label Label--success text-mono">{{ c.short_id }}</span>
+                                </div>
+                            </div>
+                            <div class="text-small color-fg-subtle mt-1">{{ c.datetime }}</div>
+                            <div class="text-small color-fg-muted">{{ c.msg }}</div>
+                            <div class="text-small color-fg-default">{{ c.author }}</div>
+                            <div class="mt-2">
+                                <div v-for="pkg in c.packages">
+                                    <img class="avatar avatar-1 mr-1" :src="pkg.icon_url" />
+                                    <span class="text-small text-bold color-fg-accent mt-1"
+                                        >{{ pkg.url.split('/')[1] }}</span
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript">
+            const app = Vue.createApp({
+                data() {
+                    return {
+                        folder: "",
+                        commits: [],
+                    };
+                },
+                computed: {
+                    is_root() {
+                        return this.folder === "";
+                    },
+                },
+                methods: {
+                    show_folder(commit) {
+                        if (this.folder !== "") return;
+                        this.folder = `${commit.project}-${commit.branch}`;
+                        this.load_commits(this.folder);
+                    },
+                    show_root() {
+                        this.load_commits("last-");
+                    },
+                    load_commits(prefix) {
+                        this.commits = [];
+                        list_files(prefix)
+                            .then((data) => {
+                                console.log(data);
+                                for (const i of data) {
+                                    if (i.Key.endsWith(".commit")) {
+                                        load_commit(i.Key, this.commits, null);
+                                    }
+                                }
+                            })
+                            .catch((err) => {
+                                console.log(err);
+                            });
+                    },
+                },
+                created() {
+                    this.show_root();
+                },
+            }).mount("#app");
+        </script>
+    </body>
+</html>
