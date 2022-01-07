@@ -52,11 +52,16 @@ if __name__ == '__main__':
     msg = shell_output('git --no-pager show -s --format="%s" HEAD')
 
     commit = {
+        "project": project_name,
         "branch": branch,
         "short_id": git_version,
         'author': author,
         'commit_time': commit_time,
         "msg": msg,
+    }
+
+    meta = {
+        "size": os.path.getsize(pkg_path),
         "icon": ""
     }
 
@@ -89,6 +94,7 @@ if __name__ == '__main__':
         index_folder, date_hash + os.path.splitext(pkg_path)[1])
     last_commit_path = os.path.join(
         base_folder, 'last-%s-%s.commit' % (proj_branch, date_hash))
+    meta_path = shrink_pkg_path + '.meta'
     # 测试文件
     tmp = os.path.join(base_folder, 'tmp')
 
@@ -100,7 +106,7 @@ if __name__ == '__main__':
 
     def monitor(name, hash):
         if name == 'res/mipmap-xxhdpi-v4/app_icon.png':
-            commit['icon'] = hash
+            meta['icon'] = hash
 
     # unpack
     src_md5 = zip_shrink.shrink(pkg_path, shrink_pkg_path, blocks_folder,
@@ -120,4 +126,5 @@ if __name__ == '__main__':
     os.remove(tmp)
     write_json(commit, commit_path)
     write_json(commit, last_commit_path)
+    write_json(meta, meta_path)
     print('success')
