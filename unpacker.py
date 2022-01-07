@@ -54,6 +54,7 @@ if __name__ == '__main__':
     commit = {
         "project": project_name,
         "branch": branch,
+        "folder": project_name + '-' + branch,
         "short_id": git_version,
         'author': author,
         'commit_time': commit_time,
@@ -61,6 +62,8 @@ if __name__ == '__main__':
     }
 
     meta = {
+        "name": "",
+        "url": "",
         "size": os.path.getsize(pkg_path),
         "icon": ""
     }
@@ -90,8 +93,13 @@ if __name__ == '__main__':
     # 日期-git_Hash
     date_hash = '%s-%s' % (commit_time[:10], git_version)
     commit_path = os.path.join(index_folder, date_hash + '.commit')
+    shrink_pkg_name = date_hash + os.path.splitext(pkg_path)[1]
     shrink_pkg_path = os.path.join(
-        index_folder, date_hash + os.path.splitext(pkg_path)[1])
+        index_folder, shrink_pkg_name)
+
+    meta['name'] = shrink_pkg_name
+    meta['url'] = os.path.join(proj_branch, shrink_pkg_name)
+
     last_commit_path = os.path.join(
         base_folder, 'last-%s-%s.commit' % (proj_branch, date_hash))
     meta_path = shrink_pkg_path + '.meta'
