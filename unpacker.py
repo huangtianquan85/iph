@@ -40,33 +40,17 @@ def get_file_md5(path):
 
 if __name__ == '__main__':
     # 项目名称
-    project_name = sys.argv[1]
+    project = sys.argv[1]
     # 构建包
     pkg_path = sys.argv[2]
 
     # 获取 git 提交信息
     branch = shell_output('git rev-parse --abbrev-ref HEAD')
-    git_version = shell_output('git rev-parse HEAD')[:8]
+    hash = shell_output('git rev-parse HEAD')[:8]
     author = shell_output('git --no-pager show -s --format="%an" HEAD')
-    commit_time = shell_output('git --no-pager show -s --format="%cI" HEAD')
+    date_time = shell_output('git --no-pager show -s --format="%ci" HEAD')
+    timestamp = int(shell_output('git --no-pager show -s --format="%ct" HEAD'))
     msg = shell_output('git --no-pager show -s --format="%s" HEAD')
-
-    commit = {
-        "project": project_name,
-        "branch": branch,
-        "folder": project_name + '-' + branch,
-        "short_id": git_version,
-        'author': author,
-        'commit_time': commit_time,
-        "msg": msg,
-    }
-
-    meta = {
-        "name": "",
-        "url": "",
-        "size": os.path.getsize(pkg_path),
-        "icon": ""
-    }
 
     '''
     目录结构
@@ -88,23 +72,36 @@ if __name__ == '__main__':
     base_folder = 'upload'
     blocks_folder = os.path.join(base_folder, 'blocks')
     # 平台-项目-分支
-    proj_branch = '%s-%s' % (project_name, branch)
+    proj_branch = '%s-%s' % (project, branch)
     index_folder = os.path.join(base_folder, proj_branch)
     # 日期-git_Hash
-    date_hash = '%s-%s' % (commit_time[:10], git_version)
+    date = date_time[:10]
+    date_hash = '%s-%s' % (date, hash)
     commit_path = os.path.join(index_folder, date_hash + '.commit')
     shrink_pkg_name = date_hash + os.path.splitext(pkg_path)[1]
     shrink_pkg_path = os.path.join(
         index_folder, shrink_pkg_name)
-
-    meta['name'] = shrink_pkg_name
-    meta['url'] = os.path.join(proj_branch, shrink_pkg_name)
-
     last_commit_path = os.path.join(
         base_folder, 'last-%s-%s.commit' % (proj_branch, date_hash))
     meta_path = shrink_pkg_path + '.meta'
     # 测试文件
     tmp = os.path.join(base_folder, 'tmp')
+
+    commit = {
+        "project": project,
+        "branch": branch,
+        "short_id": hash,
+        'author': author,
+        'datetime': date_time,
+        'timestamp': timestamp,
+        "msg": msg,
+    }
+
+    meta = {
+        "url": os.path.join(proj_branch, shrink_pkg_name),
+        "size": os.path.getsize(pkg_path),
+        "icon": ""
+    }
 
     # 重建上传目录
     if os.path.exists(base_folder):
@@ -114,7 +111,8 @@ if __name__ == '__main__':
 
     def monitor(name, hash):
         if name == 'res/mipmap-xxhdpi-v4/app_icon.png':
-            meta['icon'] = hash
+            meta['icon'] = os.path.relpath(
+                os.path.join(blocks_folder, hash), base_folder)
 
     # unpack
     src_md5 = zip_shrink.shrink(pkg_path, shrink_pkg_path, blocks_folder,
