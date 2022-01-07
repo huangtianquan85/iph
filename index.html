@@ -12,7 +12,6 @@
         <script>
             const cos_id = "AKIDDG3ZppdBSTDgsoTqwrVsynMegRxCAsKV";
             const cos_key = "wbz6wWrvjHYZIkvpTqwlJbcNr4RYOxFG";
-            const base_url = "https://autopkg-bj-1258787308.cos.ap-beijing.myqcloud.com/";
 
             const cos = new COS({
                 SecretId: cos_id,
@@ -39,7 +38,7 @@
             }
 
             function load_json(url) {
-                return fly.get(base_url + url, null, {
+                return fly.get(url, null, {
                     responseType: "json",
                 });
             }
@@ -74,7 +73,7 @@
                         load_json(i.Key)
                             .then((response) => {
                                 let p = response.data;
-                                p.icon_url = base_url + p.icon;
+                                p.icon_url = p.icon;
                                 console.log(p);
                                 commit.packages.value.push(p);
                             })
@@ -180,7 +179,7 @@
                             });
                     },
                     download(url) {
-                        window.open("pkg_loader.html?pkg=" + base_url + url, "_blank");
+                        window.open("pkg_loader.html?pkg=" + url, "_blank");
                     },
                     on_location_hash_change() {
                         if (window.location.hash.length > 1) {
