@@ -86,7 +86,7 @@
         </script>
     </head>
     <body>
-        <div class="Header d-block position-sticky top-0">
+        <div class="Header d-block">
             <div class="container-sm">
                 <div class="Header-item">
                     <div class="Header-link f4 d-flex flex-items-center">
@@ -109,36 +109,34 @@
             </div>
         </div>
         <div id="app" class="container-sm">
-            <div>
-                <div v-for="c in commits" class="mx-3">
-                    <div :class="is_root ? 'border color-shadow-medium p-3 rounded-3 mt-3' : 'TimelineItem'">
-                        <div :class="is_root ? 'float-left mr-3' : 'TimelineItem-badge'">
-                            <img
-                                @click="show_folder(c)"
-                                :class="is_root ? 'avatar avatar-8 rounded-3' : 'avatar avatar-4'"
-                                :src="c.packages.length > 0 ? c.packages[0].icon_url : ''"
-                            />
-                        </div>
-                        <div class="overflow-hidden">
-                            <div class="lh-condensed">
-                                <span v-if="is_root" class="h4 text-uppercase">{{ c.project }}</span>
-                                <div :class="is_root ? 'float-right' : ''">
-                                    <span v-if="is_root">&nbsp;</span>
-                                    <span class="branch-name">{{ c.branch }}</span>
-                                    <span>&nbsp;</span>
-                                    <span class="Label Label--success text-mono">{{ c.short_id }}</span>
-                                </div>
+            <div v-for="c in commits" class="mx-3">
+                <div :class="is_root ? 'border color-shadow-medium p-3 rounded-3 mt-3' : 'TimelineItem'">
+                    <div :class="is_root ? 'float-left mr-3' : 'TimelineItem-badge'">
+                        <img
+                            @click="show_folder(c)"
+                            :class="is_root ? 'avatar avatar-8 rounded-3' : 'avatar avatar-4'"
+                            :src="c.packages.length > 0 ? c.packages[0].icon_url : ''"
+                        />
+                    </div>
+                    <div class="overflow-hidden">
+                        <div class="lh-condensed">
+                            <span v-if="is_root" class="h4 text-uppercase">{{ c.project }}</span>
+                            <div :class="is_root ? 'float-right' : ''">
+                                <span v-if="is_root">&nbsp;</span>
+                                <span class="branch-name">{{ c.branch }}</span>
+                                <span>&nbsp;</span>
+                                <span class="Label Label--success text-mono">{{ c.short_id }}</span>
                             </div>
-                            <div class="text-small color-fg-subtle mt-1">{{ c.datetime }}</div>
-                            <div class="text-small color-fg-muted">{{ c.msg }}</div>
-                            <div class="text-small color-fg-default">{{ c.author }}</div>
-                            <div class="mt-2">
-                                <div v-for="pkg in c.packages">
-                                    <img class="avatar avatar-1 mr-1" :src="pkg.icon_url" />
-                                    <span class="text-small text-bold color-fg-accent mt-1" @click="download(pkg.url)"
-                                        >{{ pkg.url.split('/')[1] }}</span
-                                    >
-                                </div>
+                        </div>
+                        <div class="text-small color-fg-subtle mt-1">{{ c.datetime }}</div>
+                        <div class="text-small color-fg-muted">{{ c.msg }}</div>
+                        <div class="text-small color-fg-default">{{ c.author }}</div>
+                        <div class="mt-2">
+                            <div v-for="pkg in c.packages">
+                                <img class="avatar avatar-1 mr-1" :src="pkg.icon_url" />
+                                <span class="text-small text-bold color-fg-accent mt-1" @click="download(pkg.url)"
+                                    >{{ pkg.url.split('/')[1] }}</span
+                                >
                             </div>
                         </div>
                     </div>

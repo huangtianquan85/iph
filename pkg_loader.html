@@ -14,28 +14,30 @@
     </head>
 
     <body>
-        <div class="Header">
-            <div class="Header-item">
-                <a href="#" class="Header-link f4 d-flex flex-items-center">
-                    <svg
-                        height="32"
-                        class="octicon octicon-mark-github mr-2"
-                        viewBox="0 0 1024 1024"
-                        version="1.1"
-                        width="32"
-                        aria-hidden="true"
-                    >
-                        <path
-                            d="M218.453333 213.333333l34.56-42.666666h512l40.106667 42.666666M512 746.666667L277.333333 512H426.666667v-85.333333h170.666666v85.333333h149.333334L512 746.666667m364.373333-523.52l-59.306666-71.68C805.546667 136.96 788.053333 128 768 128H256c-20.053333 0-37.546667 8.96-49.493333 23.466667L147.626667 223.146667C135.253333 237.653333 128 256 128 277.333333V810.666667a85.333333 85.333333 0 0 0 85.333333 85.333333h597.333334a85.333333 85.333333 0 0 0 85.333333-85.333333V277.333333c0-21.333333-7.253333-39.68-19.626667-54.186666z"
-                            fill-rule="evenodd"
-                        ></path>
-                    </svg>
-                    <span>Incremental Package Downloader</span>
-                </a>
+        <div class="Header d-block">
+            <div class="container-sm">
+                <div class="Header-item">
+                    <a class="Header-link f4 d-flex flex-items-center">
+                        <svg
+                            height="32"
+                            class="octicon octicon-mark-github mr-2"
+                            viewBox="0 0 1024 1024"
+                            version="1.1"
+                            width="32"
+                            aria-hidden="true"
+                        >
+                            <path
+                                d="M218.453333 213.333333l34.56-42.666666h512l40.106667 42.666666M512 746.666667L277.333333 512H426.666667v-85.333333h170.666666v85.333333h149.333334L512 746.666667m364.373333-523.52l-59.306666-71.68C805.546667 136.96 788.053333 128 768 128H256c-20.053333 0-37.546667 8.96-49.493333 23.466667L147.626667 223.146667C135.253333 237.653333 128 256 128 277.333333V810.666667a85.333333 85.333333 0 0 0 85.333333 85.333333h597.333334a85.333333 85.333333 0 0 0 85.333333-85.333333V277.333333c0-21.333333-7.253333-39.68-19.626667-54.186666z"
+                                fill-rule="evenodd"
+                            ></path>
+                        </svg>
+                        <span>Incremental Package Downloader</span>
+                    </a>
+                </div>
             </div>
         </div>
 
-        <div id="app">
+        <div id="app" class="container-sm">
             <div v-if="zip_loader !== null">
                 <div class="Subhead">
                     <div class="Subhead-heading text-center">&nbsp;</div>
@@ -83,7 +85,9 @@
                 return decodeURIComponent(
                     window.location.search.replace(
                         new RegExp(
-                            "^(?:.*[&\\?]" + encodeURIComponent(sVar).replace(/[\.\+\*]/g, "\\$&") + "(?:\\=([^&]*))?)?.*$",
+                            "^(?:.*[&\\?]" +
+                                encodeURIComponent(sVar).replace(/[\.\+\*]/g, "\\$&") +
+                                "(?:\\=([^&]*))?)?.*$",
                             "i"
                         ),
                         "$1"
