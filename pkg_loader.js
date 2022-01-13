@@ -107,7 +107,8 @@ class file {
 }
 
 const State = {
-    Init: 0,
+    Init: -1,
+    CheckCache: 0,
     NeedDownload: 1,
     Downloading: 2,
     Success: 3,
@@ -127,6 +128,7 @@ class file_loader {
     }
 
     load_from_db() {
+        this.state = State.CheckCache;
         idbKeyval.get(this.hash).then((data) => {
             if (data === undefined) {
                 this.state = State.NeedDownload;
