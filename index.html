@@ -54,6 +54,9 @@
                         let c = response.data;
                         c.packages = Vue.ref([]);
                         commits.push(c);
+                        commits.sort(function (a, b) {
+                            return b.timestamp - a.timestamp;
+                        });
                         list_files(`${c.project}-${c.branch}/${c.datetime.substring(0, 10)}-${c.short_id}`)
                             .then((data) => {
                                 load_packages(data, c);
