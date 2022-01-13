@@ -387,7 +387,9 @@ class zip_loader {
         if (loaded + error === this.file_loaders.length) {
             console.log("all done");
             clearInterval(this.ticker);
-            this.repack();
+            setTimeout(() => {
+                this.repack();
+            }, 40);
         }
     }
 
