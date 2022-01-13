@@ -109,8 +109,8 @@ if __name__ == '__main__':
     os.makedirs(blocks_folder)
     os.makedirs(index_folder)
 
-    def monitor(name, hash):
-        if name == 'res/mipmap-xxhdpi-v4/app_icon.png':
+    def monitor(f_info, hash):
+        if f_info.name == 'res/mipmap-xxhdpi-v4/app_icon.png':
             meta['icon'] = os.path.relpath(
                 os.path.join(blocks_folder, hash), base_folder)
 

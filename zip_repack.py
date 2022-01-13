@@ -18,7 +18,6 @@ def repack(src_path, dst_path, item_folder):
         buffer = f.read()
 
     # 抽取原始压缩文件 hash
-    origin_hash = buffer[-zip_utils.hash_len:].hex()
     buffer = buffer[:-zip_utils.hash_len]
 
     file_infos = zip_utils.get_file_infos(buffer)

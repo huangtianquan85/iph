@@ -56,12 +56,12 @@ def shrink(src_path, dst_path, item_folder, content_monitor=None):
 
         # 写内容到文件
         path = os.path.join(item_folder, hash)
-        if not os.path.exists(path):
+        if item_folder != '/dev/null' and not os.path.exists(path):
             with open(path, 'wb') as file:
                 file.write(data)
 
         if content_monitor != None:
-            content_monitor(f.name, hash)
+            content_monitor(f, hash)
 
         # 记录 hash
         dst.write(m.digest())

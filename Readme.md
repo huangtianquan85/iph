@@ -1,6 +1,7 @@
 TODO:
 
 -   测试 apk，zip 是否会因为签名的不同，不同包内相同的文件会发生变化
+-   commits 排序
 -   下载失败重试
 -   Chrome 卡 pending 问题排查
 -   下载超时处理
