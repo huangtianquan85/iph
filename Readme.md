@@ -1,5 +1,9 @@
 TODO:
 
+-   解决浏览器 Blob 大小限制
+    -   [前端自个突破浏览器Blob和RAM大小限制保存文件的骚玩法！](https://juejin.cn/post/6985883442122604574)
+    -   [前端JS 下载大文件解决方案](https://www.cnblogs.com/mrwh/p/13227709.html)
+    -   [StreamSaver.js](https://github.com/jimmywarting/StreamSaver.js)
 -   下载失败重试
 -   Chrome 卡 pending 问题排查
 -   下载超时处理
