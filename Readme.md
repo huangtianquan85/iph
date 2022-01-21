@@ -1,5 +1,6 @@
 ## TODO:
 
+-   实现 Golang 版本的 unpacker 和 downloader
 -   ipa 如何实现增量
     -   ipa 可以通过隔空投送安装，那么如果下载到本地也可以实现安装
     -   ipa 必须通过 plist 从 https 下载，很难本地实现增量
@@ -12,6 +13,8 @@
 
 -   统计缓存大小
 -   清理缓存
+-   MEGA 的实现了一个生成下载的方法，有空可以测试一下手机上的兼容性
+    - https://mega.nz/file/7B5UVY6b#Hae2ceTBPIrTowQN0sV9fQ5lGOKzGxas2ug02RZAdGU
 -   ~~解决浏览器 Blob 大小限制~~，浏览器兼容性太难解决了
     -   StreamSaver 方案依然无法适配所有浏览器
     -   StreamSaver 的推荐方案 Native File System Access 还处于提案阶段呢
