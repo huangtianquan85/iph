@@ -1,6 +1,7 @@
 ## TODO:
 
--   实现 Golang 版本的 unpacker 和 downloader
+-   实现 Rust 版本的 unpacker 和 downloader
+-   实现一个缓冲服务器（可以解决 iOS 安装的问题和 Android 浏览器不兼容的问题，算是一个补充方案）
 -   ipa 如何实现增量
     -   ipa 可以通过隔空投送安装，那么如果下载到本地也可以实现安装
     -   ipa 必须通过 plist 从 https 下载，很难本地实现增量
