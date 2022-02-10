@@ -75,6 +75,9 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--last',
                         help='create last commit info file',
                         action='store_true')
+    parser.add_argument('-m', '--meta',
+                        help='create meta file',
+                        action='store_true')
     parser.add_argument('-t', '--tag', help='addition tag')
     args = parser.parse_args()
 
@@ -162,5 +165,6 @@ if __name__ == '__main__':
         write_json(commit, commit_path)
     if args.last:
         write_json(commit, last_commit_path)
-    write_json(meta, meta_path)
+    if args.meta:
+        write_json(meta, meta_path)
     print('success')
