@@ -88,6 +88,7 @@
             }
         </script>
     </head>
+
     <body>
         <div class="Header d-block">
             <div class="container-sm">
@@ -137,8 +138,11 @@
                         <div class="mt-2">
                             <div v-for="pkg in c.packages">
                                 <img class="avatar avatar-1 mr-1 box-shadow-none" :src="pkg.icon_url" />
-                                <span class="text-small text-bold color-fg-accent mt-1" @click="download(pkg.url)"
-                                    >{{ pkg.url.split('/')[1] }}</span
+                                <a
+                                    class="text-small text-bold color-fg-accent mt-1"
+                                    :href="'pkg_loader.html?pkg=' + pkg.url"
+                                    target="_blank"
+                                    >{{ pkg.url.split('/')[1] }}</a
                                 >
                             </div>
                         </div>
@@ -178,9 +182,6 @@
                             .catch((err) => {
                                 console.log(err);
                             });
-                    },
-                    download(url) {
-                        window.open("pkg_loader.html?pkg=" + url, "_blank");
                     },
                     on_location_hash_change() {
                         if (window.location.hash.length > 1) {
