@@ -44,6 +44,7 @@ public class PackageReceiver extends NanoHTTPD {
 
             Log.d("PackageReceiver", "received: " + sum);
             outputStream.close();
+            MainActivity.activity.InstallApk(outputFile.getAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
         }
