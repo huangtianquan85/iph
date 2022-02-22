@@ -418,12 +418,14 @@ class zip_loader {
 
     // 重组 zip 包
     repack() {
-        var bytes = [];
-        var hash = md5.create();
+        let bytes = [];
+        let hash = md5.create();
 
         function append(byte_range) {
             bytes.push(byte_range);
-            hash.update(byte_range);
+            if (!window.is_hybrid_app) {
+                hash.update(byte_range);
+            }
         }
 
         // 光标，记录上一次处理到的位置
@@ -443,6 +445,11 @@ class zip_loader {
 
         append(new Uint8Array(this.shrink_data, cursor));
 
+        if (window.is_hybrid_app) {
+            this.send_to_hybird_app(bytes);
+            return;
+        }
+
         console.log(hash.hex());
         if (this.origin_hash !== hash.hex()) {
             alert("hash check error");
@@ -457,5 +464,23 @@ class zip_loader {
         document.body.appendChild(a);
         a.click();
         a.remove();
+    }
+
+    send_to_hybird_app(bytes) {
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST", `http://127.0.0.1:10018?file=${this.name}&hash=${this.origin_hash}`, true);
+        xhr.onload = () => {
+            if (xhr.status != 200) {
+                alert(`send to hybird app error: ${xhr.status}: ${xhr.statusText}`);
+            }
+            console.log("send to hybird app success");
+        };
+
+        xhr.onerror = function () {
+            alert("send to hybird app error");
+        };
+
+        xhr.send(new Blob(bytes));
+        console.log("send to hybird app");
     }
 }
