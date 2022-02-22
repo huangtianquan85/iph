@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.webkit.JsResult;
 import android.webkit.WebChromeClient;
@@ -39,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onJsAlert(WebView view, String url, String message, final JsResult result) {
                 Toast.makeText(activity, message, Toast.LENGTH_LONG).show();
+                Log.d("WebView", "alert: " + message);
                 result.confirm();
                 return true;
             }
