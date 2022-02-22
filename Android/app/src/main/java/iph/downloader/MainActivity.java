@@ -13,6 +13,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -20,6 +21,7 @@ public class MainActivity extends AppCompatActivity {
 
     private MainActivity activity;
     private WebView webView;
+    private PackageReceiver packageReceiver;
     private int backCount = 0;
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -27,6 +29,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         activity = this;
+
+        try {
+            packageReceiver = new PackageReceiver(10018);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         setContentView(R.layout.activity_main);
         webView = findViewById(R.id.webView);
@@ -48,6 +56,15 @@ public class MainActivity extends AppCompatActivity {
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webView.loadUrl(getString(R.string.url));
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (packageReceiver != null) {
+            packageReceiver.closeAllConnections();
+            packageReceiver = null;
+        }
     }
 
     @Override
