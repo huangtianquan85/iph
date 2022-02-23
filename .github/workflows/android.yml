@@ -3,6 +3,7 @@ name: Android CI
 on:
   push:
     branches: [ master ]
+    tags: [ 'v*' ]
 
 jobs:
   build:
@@ -22,15 +23,51 @@ jobs:
       working-directory: ./Android
       run: |
         echo "${{ secrets.KEYSTORE }}" | base64 -d > iph.keystore
-        ls -al
         url=${{ secrets.INDEX_URL }}
         url=${url//\//\\\/}
         sed -i "s/url\">.*</url\">$url</g" app/src/main/res/values/strings.xml
-        cat app/src/main/res/values/strings.xml
         echo -e "\nRELEASE_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> gradle.properties
         echo "RELEASE_KEY_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> gradle.properties
-        cat gradle.properties
 
     - name: Gradle Build
       working-directory: ./Android
       run: ./gradlew assembleRelease
+
+    - name: Upload Apk
+      uses: actions/upload-artifact@v2.3.1
+      with:
+        name: ${{ github.sha }}
+        path: ./Android/app/build/outputs/apk/release/app-release.apk
+
+  release:
+    name: Release APK
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download APK from build
+        uses: actions/download-artifact@v2.1.0
+        with:
+          name: ${{ github.sha }}
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+
+      - name: Upload Release Apk
+        id: upload_release_apk 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ github.sha }}/app-release.apk
+          asset_name: iph.apk
+          asset_content_type: application/zip
