@@ -1,5 +1,17 @@
 ## TODO:
 
+-   Android 版本
+    -   实现 Md5 校验
+    -   实现卸载旧 App
+    -   实现自动集成，[参考](https://gist.github.com/alexanderbazo/227476190ef5ab655795e34ec0d314d6)
+        - build
+            - 修改 index 地址
+            - 部署 keystore
+            - gradle 构建
+            - 上传临时存储
+        - release
+            - 依赖 build
+            - 根据 Tag 构建并上传到 Github Release
 -   实现 Rust 版本的 unpacker 和 downloader
 -   实现一个缓冲服务器（可以解决 iOS 安装的问题和 Android 浏览器不兼容的问题，算是一个补充方案）
 -   ipa 如何实现增量
