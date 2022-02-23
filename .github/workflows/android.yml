@@ -18,6 +18,15 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
+    - name: Prepare Build Settings
+      working-directory: ./Android
+      run: |
+        echo ${{ secrets.KEYSTORE }} | base64 -d > iph.keystore
+        ls -al
+        echo "\nRELEASE_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> gradle.properties
+        echo "$RELEASE_KEY_PASSWORD={{ secrets.KEYSTORE_PASSWORD }}" >> gradle.properties
+        cat gradle.properties
+
     - name: Gradle Build
-      run: cd Android && 
-      run: ls -al
+      working-directory: ./Android
+      run: ./gradlew assembleRelease
