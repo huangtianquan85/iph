@@ -17,10 +17,13 @@ android {
 
     signingConfigs {
         release {
-            storeFile file("../iph.keystore")
-            storePassword RELEASE_STORE_PASSWORD
-            keyAlias "iph"
-            keyPassword RELEASE_KEY_PASSWORD
+            try {
+                storeFile file("../iph.keystore")
+                storePassword RELEASE_STORE_PASSWORD
+                keyAlias "iph"
+                keyPassword RELEASE_KEY_PASSWORD
+            } catch (Exception ignored) {
+            }
         }
     }
 
