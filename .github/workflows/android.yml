@@ -23,8 +23,12 @@ jobs:
       run: |
         echo "${{ secrets.KEYSTORE }}" | base64 -d > iph.keystore
         ls -al
-        echo "\nRELEASE_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> gradle.properties
-        echo "$RELEASE_KEY_PASSWORD={{ secrets.KEYSTORE_PASSWORD }}" >> gradle.properties
+        url=${{ secrets.INDEX_URL }}
+        url=${url//\//\\\/}
+        sed -i "s/url\">.*</url\">$url</g" app/src/main/res/values/strings.xml
+        cat app/src/main/res/values/strings.xml
+        echo -e "\nRELEASE_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> gradle.properties
+        echo "RELEASE_KEY_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> gradle.properties
         cat gradle.properties
 
     - name: Gradle Build
