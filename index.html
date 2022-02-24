@@ -20,20 +20,30 @@
 
             function list_files(prefix) {
                 return new Promise((resolve, reject) => {
-                    cos.getBucket(
-                        {
-                            Bucket: "iph-1258787308",
-                            Region: "ap-beijing",
-                            Prefix: prefix,
-                        },
-                        function (err, data) {
-                            if (err) {
-                                reject(new Error(`Error ${err}`));
-                            } else {
-                                resolve(data.Contents);
+                    let files = [];
+                    function get_list(mark) {
+                        cos.getBucket(
+                            {
+                                Bucket: "iph-1258787308",
+                                Region: "ap-beijing",
+                                Prefix: prefix,
+                                Marker: mark,
+                            },
+                            function (err, data) {
+                                if (err) {
+                                    reject(new Error(`Error ${err}`));
+                                } else {
+                                    files.push.apply(files, data.Contents);
+                                    if (data.NextMarker) {
+                                        get_list(data.NextMarker);
+                                    } else {
+                                        resolve(files);
+                                    }
+                                }
                             }
-                        }
-                    );
+                        );
+                    }
+                    get_list(null);
                 });
             }
 
@@ -77,7 +87,6 @@
                             .then((response) => {
                                 let p = response.data;
                                 p.icon_url = p.icon;
-                                console.log(p);
                                 commit.packages.value.push(p);
                             })
                             .catch((err) => {
@@ -117,12 +126,13 @@
                 <div :class="is_root ? 'border color-shadow-medium p-3 rounded-3 mt-3' : 'TimelineItem'">
                     <div :class="is_root ? 'float-left mr-3' : 'TimelineItem-badge'">
                         <img
+                            v-if="!c.day"
                             @click="show_folder(c)"
                             :class="is_root ? 'avatar avatar-8 rounded-3 box-shadow-none' : 'avatar avatar-4 box-shadow-none'"
                             :src="c.packages.length > 0 ? c.packages[0].icon_url : ''"
                         />
                     </div>
-                    <div class="overflow-hidden">
+                    <div v-if="!c.day" class="overflow-hidden">
                         <div class="lh-condensed">
                             <span v-if="is_root" class="h4 text-uppercase">{{ c.project }}</span>
                             <div :class="is_root ? 'float-right' : ''">
@@ -147,6 +157,12 @@
                             </div>
                         </div>
                     </div>
+                    <div v-if="c.day">
+                        <button class="btn btn-sm mr-2 mt-1 border-0" type="button" @click="show_hide(c.day)">
+                            <span class="color-fg-accent mr-2">{{ c.day }}</span>
+                            <span class="color-fg-muted">{{ c.packages_count }} commits</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -156,6 +172,8 @@
                     return {
                         folder: "",
                         commits: [],
+                        history: [],
+                        history_days: {},
                     };
                 },
                 computed: {
@@ -168,11 +186,32 @@
                         if (this.folder !== "") return;
                         window.location.hash = `${commit.project}-${commit.branch}`;
                     },
-                    load_commits(prefix) {
+                    show_hide(day) {
+                        if (this.history_days[day].show) {
+                            this.history_days[day].show = false;
+                            for (let i = this.commits.length - 1; i >= 0; i--) {
+                                const c = this.commits[i];
+                                if (c.day) {
+                                    continue;
+                                }
+                                if (c.datetime.substring(0, 10) == day) {
+                                    this.commits.splice(i, 1);
+                                }
+                            }
+                        } else {
+                            this.history_days[day].show = true;
+                            this.load_commits_by_day(day);
+                        }
+                    },
+                    load_commits_by_day(day) {
+                        for (const c of this.history_days[day].commits) {
+                            load_commit(c, this.commits, null);
+                        }
+                    },
+                    load_last_commits() {
                         this.commits = [];
-                        list_files(prefix)
+                        list_files("last-")
                             .then((data) => {
-                                console.log(data);
                                 for (const i of data) {
                                     if (i.Key.endsWith(".commit")) {
                                         load_commit(i.Key, this.commits, null);
@@ -183,13 +222,60 @@
                                 console.log(err);
                             });
                     },
+                    load_history_commits(prefix) {
+                        this.commits = [];
+                        this.history = [];
+                        this.history_days = {};
+                        list_files(prefix)
+                            .then((data) => {
+                                let days = this.history_days;
+                                let last_day = "";
+                                let last_day_time = new Date("1970-01-01");
+                                for (const i of data) {
+                                    if (i.Key.endsWith(".commit")) {
+                                        let d = i.Key.substring(i.Key.indexOf("/") + 1, i.Key.lastIndexOf("-"));
+                                        if (!days.hasOwnProperty(d)) {
+                                            let t = new Date(d + " 23:59:59");
+                                            days[d] = {
+                                                day: d,
+                                                show: false,
+                                                time: t,
+                                                commits: [],
+                                            };
+                                            if (t > last_day_time) {
+                                                last_day_time = t;
+                                                last_day = d;
+                                            }
+                                        }
+                                        days[d].commits.push(i.Key);
+                                    }
+                                }
+                                if (last_day == "") {
+                                    return;
+                                }
+
+                                days[last_day].show = true;
+                                for (const d in days) {
+                                    this.history.push(days[d]);
+                                    this.commits.push({
+                                        day: d,
+                                        timestamp: days[d].time.valueOf() / 1000,
+                                        packages_count: days[d].commits.length,
+                                    });
+                                }
+                                this.load_commits_by_day(last_day);
+                            })
+                            .catch((err) => {
+                                console.log(err);
+                            });
+                    },
                     on_location_hash_change() {
                         if (window.location.hash.length > 1) {
                             this.folder = window.location.hash.substring(1);
-                            this.load_commits(this.folder);
+                            this.load_history_commits(this.folder);
                         } else {
                             this.folder = "";
-                            this.load_commits("last-");
+                            this.load_last_commits();
                         }
                     },
                 },
