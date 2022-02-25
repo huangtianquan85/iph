@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.webkit.JsResult;
@@ -118,5 +119,16 @@ public class MainActivity extends AppCompatActivity {
                 .setPositiveButton(R.string.reload, (dialog, id) -> webView.reload())
                 .setNegativeButton(R.string.cancel, null);
         builder.create().show();
+    }
+
+    public String GetCacheDir() {
+        String cacheDir;
+        if (Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())
+                || !Environment.isExternalStorageRemovable()) {
+            cacheDir = getExternalCacheDir().getPath();
+        } else {
+            cacheDir = getCacheDir().getPath();
+        }
+        return cacheDir;
     }
 }

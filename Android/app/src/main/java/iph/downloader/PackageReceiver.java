@@ -1,6 +1,5 @@
 package iph.downloader;
 
-import android.os.Environment;
 import android.util.Log;
 
 import java.io.File;
@@ -10,7 +9,6 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -30,8 +28,12 @@ public class PackageReceiver extends NanoHTTPD {
         int total = Integer.parseInt(Objects.requireNonNull(headers.get("content-length")));
 
         try {
-            String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
-            File outputFile = new File(path + "/" + Objects.requireNonNull(params.get("file")).get(0));
+            File apkCacheDir = new File(MainActivity.activity.getCacheDir() + "/apk_cache");
+            if (!apkCacheDir.exists()) {
+                apkCacheDir.mkdir();
+            }
+
+            File outputFile = new File(apkCacheDir.getPath() + "/temp.apk");
             outputFile.createNewFile();
             FileOutputStream outputStream = new FileOutputStream(outputFile);
 

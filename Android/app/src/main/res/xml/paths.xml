@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <external-path
-        name="AppInstaller"
-        path="/Download" />
+    <cache-path
+        name="cache"
+        path="apk_cache" />
+    <external-cache-path
+        name="externalCache"
+        path="apk_cache" />
 </paths>
