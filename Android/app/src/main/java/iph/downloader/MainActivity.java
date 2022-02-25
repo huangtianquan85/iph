@@ -1,5 +1,6 @@
 package iph.downloader;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
@@ -89,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
                 public void run() {
                     backCount = 0;
                 }
-            }, 2000, 2000);
+            }, 2000);
 
             return true;
         }
@@ -109,5 +110,13 @@ public class MainActivity extends AppCompatActivity {
             intent.setDataAndType(Uri.fromFile(apkFile), "application/vnd.android.package-archive");
         }
         startActivity(intent);
+    }
+
+    public void OnHashCheckError() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(R.string.hash_error)
+                .setPositiveButton(R.string.reload, (dialog, id) -> webView.reload())
+                .setNegativeButton(R.string.cancel, null);
+        builder.create().show();
     }
 }

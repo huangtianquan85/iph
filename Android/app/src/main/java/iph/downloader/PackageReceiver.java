@@ -7,7 +7,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -32,6 +35,8 @@ public class PackageReceiver extends NanoHTTPD {
             outputFile.createNewFile();
             FileOutputStream outputStream = new FileOutputStream(outputFile);
 
+            MessageDigest md = MessageDigest.getInstance("MD5");
+
             InputStream inputStream = session.getInputStream();
             byte[] buffer = new byte[1024 * 1024];
             int n;
@@ -40,12 +45,26 @@ public class PackageReceiver extends NanoHTTPD {
                 n = inputStream.read(buffer);
                 sum += n;
                 outputStream.write(buffer, 0, n);
+                md.update(buffer, 0, n);
             } while (sum < total);
 
             Log.d("PackageReceiver", "received: " + sum);
             outputStream.close();
-            MainActivity.activity.InstallApk(outputFile.getAbsolutePath());
-        } catch (IOException e) {
+
+            StringBuilder hashBuilder = new StringBuilder();
+            for (byte i : md.digest()) {
+                hashBuilder.append(String.format("%02x", i));
+            }
+
+            new Thread(() -> MainActivity.activity.runOnUiThread(() -> {
+                if (hashBuilder.toString().equals(Objects.requireNonNull(params.get("hash")).get(0))) {
+                    MainActivity.activity.InstallApk(outputFile.getAbsolutePath());
+                } else {
+                    outputFile.delete();
+                    MainActivity.activity.OnHashCheckError();
+                }
+            })).start();
+        } catch (IOException | NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
 

@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">Incremental Package Hub</string>
     <string name="url">https://jsrun.net/EiYKp/edit</string>
+    <string name="hash_error">Hash check error, reload?</string>
+    <string name="cancel">Cancel</string>
+    <string name="reload">Reload</string>
 </resources>
