@@ -1,6 +1,9 @@
 ## TODO:
 
 -   Android 版本
+    -   通过扫码设定主页，进而使用内网缓存
+        - [华为扫码 SDK](https://developer.huawei.com/consumer/cn/doc/development/HMSCore-Examples/android-sample-code-0000001050734383)
+        - [Preference 数据存储](https://developer.android.com/guide/topics/ui/settings/use-saved-values?hl=zh-cn)
     -   实现卸载旧 App
 -   实现 Rust 版本的 unpacker 和 downloader
 -   实现一个缓冲服务器（可以解决 iOS 安装的问题和 Android 浏览器不兼容的问题，算是一个补充方案）
@@ -17,7 +20,7 @@
 -   统计缓存大小
 -   清理缓存
 -   MEGA 的实现了一个生成下载的方法，有空可以测试一下手机上的兼容性
-    - https://mega.nz/file/7B5UVY6b#Hae2ceTBPIrTowQN0sV9fQ5lGOKzGxas2ug02RZAdGU
+    -   https://mega.nz/file/7B5UVY6b#Hae2ceTBPIrTowQN0sV9fQ5lGOKzGxas2ug02RZAdGU
 -   ~~解决浏览器 Blob 大小限制~~，浏览器兼容性太难解决了
     -   StreamSaver 方案依然无法适配所有浏览器
     -   StreamSaver 的推荐方案 Native File System Access 还处于提案阶段呢
