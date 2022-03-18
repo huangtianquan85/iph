@@ -4,6 +4,7 @@
 import os
 import shutil
 import hashlib
+import zip_utils
 import zip_shrink
 import zip_repack
 import json
@@ -78,6 +79,7 @@ if __name__ == '__main__':
     parser.add_argument('-m', '--meta',
                         help='create meta file',
                         action='store_true')
+    parser.add_argument('-th', '--threshold', type=int, help='set threshold')
     parser.add_argument('-t', '--tag', help='addition tag')
     args = parser.parse_args()
 
@@ -144,6 +146,10 @@ if __name__ == '__main__':
         if f_info.name == 'res/mipmap-xxhdpi-v4/app_icon.png':
             meta['icon'] = os.path.relpath(
                 os.path.join(blocks_folder, hash), base_folder)
+
+    # 设置 threshold
+    if args.threshold != None:
+        zip_utils.threshold = args.threshold
 
     # unpack
     src_md5 = zip_shrink.shrink(pkg_path, shrink_pkg_path, blocks_folder,
