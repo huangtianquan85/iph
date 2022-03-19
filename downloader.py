@@ -105,25 +105,31 @@ def download_next(downloads, base_url, item_folder):
 
         try:
             r = requests.get(base_url + '/blocks/' + hash)
-            if r.status_code == 200:
-                h = get_buffer_md5(r.content)
-                if h == hash:
-                    path = os.path.join(item_folder, hash)
-                    with open(path, 'wb') as f:
-                        f.write(r.content)
-                    print('downloaded: %s %s' % (hash, next.file_info.name))
+            if r.status_code != 200:
+                raise Exception('error: status_code: %d' % r.status_code)
 
-                    lock.acquire()
-                    next.state = 'done'
-                    lock.release()
+            h = get_buffer_md5(r.content)
+            if h != hash:
+                raise Exception('error: md5 not match')
+
+            path = os.path.join(item_folder, hash)
+            with open(path, 'wb') as f:
+                f.write(r.content)
+            print('downloaded: %s %s' % (hash, next.file_info.name))
+
+            lock.acquire()
+            next.state = 'done'
+            lock.release()
 
         except Exception as e:
             print(e)
 
             lock.acquire()
             if next.retry > 2:
+                print('retry fail' + hash)
                 next.state = 'fail'
             else:
+                print('retry ' + hash)
                 next.retry += 1
                 next.state = 'wait'
             lock.release()
@@ -198,6 +204,8 @@ if __name__ == '__main__':
         dst_path = os.path.join(output_path, file_name)
     else:
         dst_path = output_path
+
+    print('repacking...')
 
     # repack
     zip_repack.repack(shrink_pkg_path, dst_path, blocks_folder)
