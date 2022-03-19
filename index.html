@@ -67,7 +67,7 @@
                         commits.sort(function (a, b) {
                             return b.timestamp - a.timestamp;
                         });
-                        list_files(`${c.project}-${c.branch}/${c.datetime.substring(0, 10)}-${c.short_id}`)
+                        list_files(`${c.project}-${c.branch}/metas/${c.datetime.substring(0, 10)}-${c.short_id}`)
                             .then((data) => {
                                 load_packages(data, c);
                             })
@@ -226,14 +226,14 @@
                         this.commits = [];
                         this.history = [];
                         this.history_days = {};
-                        list_files(prefix)
+                        list_files(`${prefix}/commits`)
                             .then((data) => {
                                 let days = this.history_days;
                                 let last_day = "";
                                 let last_day_time = new Date("1970-01-01");
                                 for (const i of data) {
                                     if (i.Key.endsWith(".commit")) {
-                                        let d = i.Key.substring(i.Key.indexOf("/") + 1, i.Key.lastIndexOf("-"));
+                                        let d = i.Key.substring(i.Key.lastIndexOf("/") + 1, i.Key.lastIndexOf("-"));
                                         if (!days.hasOwnProperty(d)) {
                                             let t = new Date(d + " 23:59:59");
                                             days[d] = {
