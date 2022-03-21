@@ -142,7 +142,9 @@
                                 <span class="Label Label--success text-mono">{{ c.short_id }}</span>
                             </div>
                         </div>
-                        <div class="text-small color-fg-subtle mt-1">{{ c.datetime }}</div>
+                        <div class="text-small color-fg-subtle mt-1" @dblclick="toggle_timestamp()">
+                            {{ show_timestamp ? c.timestamp : c.datetime }}
+                        </div>
                         <div class="text-small color-fg-muted">{{ c.msg }}</div>
                         <div class="text-small color-fg-default">{{ c.author }}</div>
                         <div class="mt-2">
@@ -174,6 +176,7 @@
                         commits: [],
                         history: [],
                         history_days: {},
+                        show_timestamp: false,
                     };
                 },
                 computed: {
@@ -182,6 +185,9 @@
                     },
                 },
                 methods: {
+                    toggle_timestamp() {
+                        this.show_timestamp = !this.show_timestamp;
+                    },
                     show_folder(commit) {
                         if (this.folder !== "") return;
                         window.location.hash = `${commit.project}-${commit.branch}`;
