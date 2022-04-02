@@ -129,7 +129,7 @@
                             v-if="!c.day"
                             @click="show_folder(c)"
                             :class="is_root ? 'avatar avatar-8 rounded-3 box-shadow-none' : 'avatar avatar-4 box-shadow-none'"
-                            :src="c.packages.length > 0 ? c.packages[0].icon_url : ''"
+                            :src="get_icon(c)"
                         />
                     </div>
                     <div v-if="!c.day" class="overflow-hidden">
@@ -149,7 +149,10 @@
                         <div class="text-small color-fg-default">{{ c.author }}</div>
                         <div class="mt-2">
                             <div v-for="pkg in c.packages">
-                                <img class="avatar avatar-1 mr-1 box-shadow-none" :src="pkg.icon_url" />
+                                <img
+                                    class="avatar avatar-1 mr-1 box-shadow-none"
+                                    :src="pkg.icon_url === '' ? 'package.png' : pkg.icon_url"
+                                />
                                 <a
                                     class="text-small text-bold color-fg-accent mt-1"
                                     :href="'pkg_loader.html?pkg=' + pkg.url"
@@ -185,6 +188,14 @@
                     },
                 },
                 methods: {
+                    get_icon(commit) {
+                        for (const p of commit.packages) {
+                            if (p.icon_url !== "") {
+                                return p.icon_url;
+                            }
+                        }
+                        return "package.png";
+                    },
                     toggle_timestamp() {
                         this.show_timestamp = !this.show_timestamp;
                     },
