@@ -88,6 +88,9 @@
                                 let p = response.data;
                                 p.icon_url = p.icon;
                                 commit.packages.value.push(p);
+                                commit.packages.value.sort(function (a, b) {
+                                    return a.url > b.url ? 1 : -1;
+                                });
                             })
                             .catch((err) => {
                                 handle_error(err);
