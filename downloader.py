@@ -102,9 +102,10 @@ def download_next(downloads, base_url, item_folder):
             break
 
         hash = next.hash
+        timeout = next.file_info.compressed_size / (1024 * 128) + 5
 
         try:
-            r = requests.get(base_url + '/blocks/' + hash)
+            r = requests.get(base_url + '/blocks/' + hash, timeout=timeout)
             if r.status_code != 200:
                 raise Exception('error: status_code: %d' % r.status_code)
 
