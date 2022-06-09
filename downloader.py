@@ -151,6 +151,13 @@ def monitor(downloads):
             all_done = False
             break
 
+        status = {}
+        for d in downloads:
+            if d.state not in status:
+                status[d.state] = 0
+            status[d.state] += 1
+        print(status)
+
         if all_done:
             break
     return has_error
