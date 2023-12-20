@@ -12,11 +12,13 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.View;
 import android.webkit.JsResult;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -87,6 +89,9 @@ public class MainActivity extends AppCompatActivity {
         if (host != null && host.equals(h)) {
             return;
         }
+
+        TextView textView = findViewById(R.id.textViewCenter);
+        textView.setVisibility(View.GONE);
 
         host = h;
         webView.loadUrl(host);
