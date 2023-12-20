@@ -32,6 +32,8 @@ public class MainActivity extends AppCompatActivity {
     private PackageReceiver packageReceiver;
     private int backCount = 0;
 
+    private String host = null;
+
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,7 +65,31 @@ public class MainActivity extends AppCompatActivity {
         });
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
-        webView.loadUrl(getString(R.string.url));
+
+        LoadHost(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent); // 如果你想后续调用 getIntent() 返回新的 Intent，则需要这一行
+        LoadHost(intent);
+    }
+
+    private void LoadHost(Intent intent) {
+        Uri data = intent.getData();
+        if (data == null) {
+            return;
+        }
+
+        String h = "https://" + data.getHost();
+
+        if (host != null && host.equals(h)) {
+            return;
+        }
+
+        host = h;
+        webView.loadUrl(host);
     }
 
     @Override
