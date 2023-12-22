@@ -6,6 +6,7 @@ import androidx.core.content.FileProvider;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -35,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private int backCount = 0;
 
     private String host = null;
+    private static final String HostPrefKey = "Host";
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -68,33 +70,49 @@ public class MainActivity extends AppCompatActivity {
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
 
-        LoadHost(getIntent());
+        // 从 SharedPreferences 获取字典
+        SharedPreferences sharedPreferences = getSharedPreferences("IPH_Pref", MODE_PRIVATE);
+        String hostUrl = sharedPreferences.getString(HostPrefKey, null);
+        if (hostUrl != null) {
+            LoadHost(hostUrl);
+        }
+
+        Load(getIntent());
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent); // 如果你想后续调用 getIntent() 返回新的 Intent，则需要这一行
-        LoadHost(intent);
+        Load(intent);
     }
 
-    private void LoadHost(Intent intent) {
+    private void Load(Intent intent) {
         Uri data = intent.getData();
         if (data == null) {
             return;
         }
 
-        String h = "https://" + data.getHost();
+        LoadHost(data.getHost());
+    }
 
-        if (host != null && host.equals(h)) {
+    private void LoadHost(String hostUrl) {
+        if (host != null && host.equals(hostUrl)) {
             return;
         }
+
+        host = hostUrl;
+
+        SharedPreferences sharedPreferences = getSharedPreferences("IPH_Pref", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(HostPrefKey, host);
+        editor.apply();
 
         TextView textView = findViewById(R.id.textViewCenter);
         textView.setVisibility(View.GONE);
 
-        host = h;
-        webView.loadUrl(host);
+        String url = "https://" + hostUrl;
+        webView.loadUrl(url);
     }
 
     @Override
