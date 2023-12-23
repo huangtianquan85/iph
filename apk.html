@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>(IPH) Incremental Package Hub</title>
+    <script src="libs/vue.global.prod.js"></script>
+    <link href="libs/primer.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="app" class="container-sm">
+        <div class="mt-9 text-center">
+            <img src="ic_launcher.png" class="mx-auto" />
+        </div>
+        <div class="mt-6 text-center">
+            <button class="btn" @click="download">Download APK</button>
+        </div>
+        <div class="mt-4 text-center">
+            <button class="btn btn-primary" @click="launch">Launch IPH App</button>
+        </div>
+    </div>
+    <script type="text/javascript">
+        const { createApp } = Vue;
+
+        createApp({
+            methods: {
+                download() {
+                    window.location.href = "iph.apk";
+                },
+                launch() {
+                    window.location.href = "iph://" + window.location.host;
+                },
+            },
+        }).mount("#app");
+    </script>
+</body>
+
+</html>
