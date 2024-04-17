@@ -6,6 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Incremental Package Downloader</title>
         <script src="libs/vue.global.prod.js"></script>
+        <script src="libs/idb.js"></script>
         <script src="libs/idb-keyval.js"></script>
         <script src="libs/md5.js"></script>
         <link href="libs/primer.css" rel="stylesheet" />
@@ -58,22 +59,22 @@
                 <div v-if="zip_loader.download_state !== null">
                     <div class="Subhead">
                         <div class="Subhead-heading text-center">&nbsp;</div>
-                        <div class="Subhead-description text-center color-fg-default text-bold">{{ blocks_state }}</div>
+                        <div class="Subhead-description text-center color-fg-default text-bold" v-html="blocks_state"></div>
                     </div>
 
                     <div
-                        v-for="l in zip_loader.download_queue"
+                        v-for="d in downloaders"
                         class="one-fourth column mt-3 px-3 lh-condensed-ultra wb-break-all color-fg-muted"
                     >
-                        {{ l.onloaded[0].name }}
+                        {{ d.file_loader.onloaded[0].name }}
                         <span class="Progress Progress--small mt-1">
                             <span
                                 class="Progress-item color-bg-success-emphasis"
-                                :style="'width: ' + (l.progress * 100) + '%'"
+                                :style="'width: ' + (d.progress * 100) + '%'"
                             ></span>
                         </span>
                         <div class="text-small color-fg-subtle mt-1">
-                            {{ format_size(l.size * l.progress) }}/{{ format_size(l.size) }}
+                            {{ format_size(d.file_loader.size * d.progress) }}/{{ format_size(d.file_loader.size) }}
                         </div>
                     </div>
                 </div>
@@ -108,18 +109,24 @@
                             ? "Downloading the shrink package"
                             : "The shrink package downloaded";
                     },
+                    downloaders() {
+                        return this.zip_loader.downloaders.filter(d => d.file_loader !== undefined);
+                    },
                     blocks_state() {
-                        if (this.zip_loader === null || this.zip_loader.download_state === null) return "";
-                        let s = this.zip_loader.download_state;
+                        if (this.zip_loader === null || this.zip_loader.download_state.total_num === 0) return "";
 
-                        if (s.downloaded_num === s.total_num) {
-                            return "All blocks downloaded";
+                        let s = this.zip_loader.download_state;
+                        if (s.downloaded_num + s.load_cached_num === s.total_num) {
+                            return "All blocks done";
                         }
 
                         return (
-                            "Downloading blocks " +
+                            "loaded cached blocks " +
+                            `${s.load_cached_num}(${this.format_size(s.load_cached_size)})` +
+                            "<br>downloaded blocks " +
                             `${s.downloaded_num}(${this.format_size(s.downloaded_size)})` +
-                            `/${s.total_num}(${this.format_size(s.total_size)})`
+                            "<br>total blocks " +
+                            `${s.total_num}(${this.format_size(s.total_size)})`
                         );
                     },
                 },

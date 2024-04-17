@@ -1,9 +1,12 @@
 ## TODO:
 
 -   Android 版本
-    -   通过扫码设定主页，进而使用内网缓存
-        - [华为扫码 SDK](https://developer.huawei.com/consumer/cn/doc/development/HMSCore-Examples/android-sample-code-0000001050734383)
-        - [Preference 数据存储](https://developer.android.com/guide/topics/ui/settings/use-saved-values?hl=zh-cn)
+    -   转换工程到 Kotlin 项目
+    -   使用 Kotlin 实现 package_loader.js 的功能，js 端只保留 HTML 用来实时显示 Android 端传过来的进度数据
+        -   使用写入大文件的方式，使用 KV 数据库记录 Blob 的位置，每次新下载的文件，在都下载完成后追加到大文件末尾
+        -   或者直接使用高性能的类似 IndexedDB 的键值数据库，MMKV，RocksDB，Realm 等
+            -   https://github.com/Tencent/MMKV/blob/master/README_CN.md
+            -   小文件使用 MMKV 存储，大文件直接使用文件存储
     -   实现卸载旧 App
 -   实现 Rust 版本的 unpacker 和 downloader
 -   实现一个缓冲服务器（可以解决 iOS 安装的问题和 Android 浏览器不兼容的问题，算是一个补充方案）
