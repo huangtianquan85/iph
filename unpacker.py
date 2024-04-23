@@ -48,6 +48,7 @@ def get_file_md5(path):
 
 def get_commit_infos(project):
     branch = shell_output('git rev-parse --abbrev-ref HEAD')
+    branch = branch.replace('/', '_')
     hash = shell_output('git rev-parse HEAD')[:8]
     author = shell_output('git --no-pager show -s --format="%an" HEAD')
     date_time = shell_output('git --no-pager show -s --format="%ci" HEAD')
