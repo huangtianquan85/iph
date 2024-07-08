@@ -162,18 +162,18 @@ def unpack_by_git(pkg_path, base_folder, blocks_folder, args):
         write_json(meta, meta_path)
 
 
-def unpack_blocks_only(pkg_path, base_folder, blocks_folder, shrink_name):
-    if shrink_name != None:
+def unpack_blocks_only(pkg_path, base_folder, blocks_folder, shrink_pkg_name):
+    if shrink_pkg_name != None:
         shrink_pkg_folder = os.path.join(base_folder, 'pkgs')
         mkdirs(shrink_pkg_folder)
-        shrink_file = os.path.join(shrink_pkg_folder, shrink_name + '.zip')
+        shrink_pkg_path = os.path.join(shrink_pkg_folder, shrink_pkg_name + '.zip')
     else:
-        shrink_file = 'shrink_tmp.zip'
+        shrink_pkg_path = 'shrink_tmp.zip'
 
-    unpack_and_check(pkg_path, shrink_file, blocks_folder, None)
+    unpack_and_check(pkg_path, shrink_pkg_path, blocks_folder, None)
 
-    if shrink_name == None:
-        shutil.move()
+    if shrink_pkg_name == None:
+        os.remove(shrink_pkg_path)
 
 
 if __name__ == '__main__':
@@ -189,7 +189,7 @@ if __name__ == '__main__':
     blocks_only_group.add_argument('--blocks-only',
                                    help='without git commit infos',
                                    action='store_true')
-    blocks_only_group.add_argument('--shrink-name',
+    blocks_only_group.add_argument('--shrink-pkg-name',
                                    help='blocks-only mode shrink zip name')
 
     by_git_group = parser.add_argument_group(
@@ -224,7 +224,7 @@ if __name__ == '__main__':
     mkdirs(blocks_folder)
 
     if args.blocks_only:
-        unpack_blocks_only(pkg_path, base_folder, blocks_folder, args.shrink_name)
+        unpack_blocks_only(pkg_path, base_folder, blocks_folder, args.shrink_pkg_name)
     else:
         unpack_by_git(pkg_path, base_folder, blocks_folder, args)
 
