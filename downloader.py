@@ -194,7 +194,7 @@ if __name__ == '__main__':
     print('%d blocks need to download' % len(downloads))
 
     # 开 5 个线程下载
-    base_url = url[0:-len(urlparse(url).path)]
+    base_url = '/'.join(url.split('/')[:-2])
     for i in range(5):
         t = threading.Thread(target=download_next, args=(
             downloads, base_url, blocks_folder))
