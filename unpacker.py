@@ -162,10 +162,18 @@ def unpack_by_git(pkg_path, base_folder, blocks_folder, args):
         write_json(meta, meta_path)
 
 
-def unpack_blocks_only(pkg_path, blocks_folder):
-    tmp = 'shrink_tmp.zip'
-    unpack_and_check(pkg_path, tmp, blocks_folder, None)
-    os.remove(tmp)
+def unpack_blocks_only(pkg_path, base_folder, blocks_folder, shrink_name):
+    if shrink_name != None:
+        shrink_pkg_folder = os.path.join(base_folder, 'pkgs')
+        mkdirs(shrink_pkg_folder)
+        shrink_file = os.path.join(shrink_pkg_folder, shrink_name + '.zip')
+    else:
+        shrink_file = 'shrink_tmp.zip'
+
+    unpack_and_check(pkg_path, shrink_file, blocks_folder, None)
+
+    if shrink_name == None:
+        shutil.move()
 
 
 if __name__ == '__main__':
@@ -181,6 +189,8 @@ if __name__ == '__main__':
     blocks_only_group.add_argument('--blocks-only',
                                    help='without git commit infos',
                                    action='store_true')
+    blocks_only_group.add_argument('--shrink-name',
+                                   help='blocks-only mode shrink zip name')
 
     by_git_group = parser.add_argument_group(
         title='By git commit info options')
@@ -214,7 +224,7 @@ if __name__ == '__main__':
     mkdirs(blocks_folder)
 
     if args.blocks_only:
-        unpack_blocks_only(pkg_path, blocks_folder)
+        unpack_blocks_only(pkg_path, base_folder, blocks_folder, args.shrink_name)
     else:
         unpack_by_git(pkg_path, base_folder, blocks_folder, args)
 
