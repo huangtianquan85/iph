@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Incremental Package Downloader</title>
+    <script src="libs/vue.global.prod.js"></script>
+    <script src="libs/idb.js"></script>
+    <script src="libs/idb-keyval.js"></script>
+    <script src="libs/md5.js"></script>
+    <link href="libs/primer.css" rel="stylesheet" />
+    <script src="pkg_loader.js"></script>
+    <style></style>
+</head>
+
+<body>
+    <div class="Header d-block">
+        <div class="container-sm">
+            <div class="Header-item">
+                <a class="Header-link f4 d-flex flex-items-center">
+                    <svg height="32" class="octicon octicon-mark-github mr-2" viewBox="0 0 1024 1024" version="1.1"
+                        width="32" aria-hidden="true">
+                        <path
+                            d="M218.453333 213.333333l34.56-42.666666h512l40.106667 42.666666M512 746.666667L277.333333 512H426.666667v-85.333333h170.666666v85.333333h149.333334L512 746.666667m364.373333-523.52l-59.306666-71.68C805.546667 136.96 788.053333 128 768 128H256c-20.053333 0-37.546667 8.96-49.493333 23.466667L147.626667 223.146667C135.253333 237.653333 128 256 128 277.333333V810.666667a85.333333 85.333333 0 0 0 85.333333 85.333333h597.333334a85.333333 85.333333 0 0 0 85.333333-85.333333V277.333333c0-21.333333-7.253333-39.68-19.626667-54.186666z"
+                            fill-rule="evenodd"></path>
+                    </svg>
+                    <span>Incremental Package Downloader</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 内容区域 -->
+    <div id="app" class="container-sm d-flex flex-justify-center">
+        <div class="border color-shadow-medium p-4 rounded-3 mt-3">
+            <div class="form-group">
+                <input type="text" class="form-control" v-model="commitHash" placeholder="Git Commit Short Hash" />
+            </div>
+            <div class="form-group form-checkbox">
+                <label>
+                    <input type="checkbox" v-model="isProtected" />
+                    Protected
+                </label>
+            </div>
+            <button class="btn btn-block btn-primary" @click="download">
+                下载
+            </button>
+        </div>
+    </div>
+
+    <!-- Vue.js 脚本 -->
+    <script type="text/javascript">
+        const app = Vue.createApp({
+            data() {
+                return {
+                    commitHash: "",
+                    isProtected: false,
+                };
+            },
+            methods: {
+                download() {
+                    const baseUrl =
+                        "https://example.com/xxx/pkgs/wechatgame-";
+                    const url =
+                        "pkg_loader.html?pkg=" +
+                        baseUrl +
+                        this.commitHash +
+                        (this.isProtected ? "-p" : "") +
+                        ".zip";
+                    console.log(url);
+                    window.open(url, "_blank");
+                },
+            },
+        }).mount("#app");
+    </script>
+</body>
+
+</html>
