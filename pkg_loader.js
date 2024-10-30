@@ -134,7 +134,11 @@ class downloader {
         const f = this.zip_loader.need_downloads.pop();
         this.file_loader = f;
         if (f !== undefined) {
-            download("blocks/" + f.hash, (p) => {
+            let url = "blocks/" + f.hash
+            if (this.zip_loader.base_url) {
+                url = this.zip_loader.base_url + "/" + url;
+            }
+            download(url, (p) => {
                 this.progress = p;
             })
                 .then((data) => {
@@ -175,7 +179,7 @@ function download(url, progress_callback) {
         xhr.send();
 
         xhr.onload = () => {
-            if (xhr.status != 200) {
+            if (xhr.status !== 200) {
                 reject(new Error(`Error ${xhr.status}: ${xhr.statusText}`));
                 return;
             }
@@ -197,6 +201,11 @@ class zip_loader {
     constructor(url) {
         this.url = url;
         let arr = url.split("/");
+        if (url.startsWith("http")) {
+            // 目前的规则，都是包在项目目录下，blocks 目录和项目目录同级
+            this.base_url = arr.slice(0, -2).join("/");
+        }
+        this.browser_download_name = arr.slice(-2).join("/");
         this.name = arr[arr.length - 1];
         this.shrink_data = null;
         this.shrink_data_progress = 0;
@@ -217,7 +226,7 @@ class zip_loader {
         this.max_downloader = 5;
         this.ticker = null;
 
-        this.downloaders = Array.from({ length: this.max_downloader }, () => new downloader(this));
+        this.downloaders = Array.from({length: this.max_downloader}, () => new downloader(this));
         this.need_downloads = [];
     }
 
@@ -449,7 +458,7 @@ class zip_loader {
 
         let fileBlob = new Blob(bytes);
         let a = document.createElement("a");
-        a.download = this.url;
+        a.download = this.browser_download_name;
         a.href = URL.createObjectURL(fileBlob);
         a.style.display = "none";
         document.body.appendChild(a);
